@@ -18,5 +18,13 @@ export const routes: Routes = [
 {
     path:'cart',
     loadComponent: () => import('@/src/app/shell/layout/web-page/shopping-cart/shopping-cart'),
+},
+{
+    path:'checkout',
+    loadComponent: () => import('@/src/app/shell/layout/web-page/checkout/checkout'),
+},
+{
+    path:'order-success',
+    loadComponent: () => import('@/src/app/shell/layout/web-page/order-success/order-success'),
 }
 ];

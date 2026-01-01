@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { ViewPanel } from "@/src/app/shared/directives/view-panel";
 import { CatalogStore } from '@/src/app/domains/catalog/data-access/catalog.store';
-import { ShowCartItem } from "../show-cart-item/show-cart-item";
+import { ShowCartItem } from "@/src/app/domains/cart/feature/show-cart-item/show-cart-item";
 
 @Component({
   selector: 'webapp-list-cart-items',

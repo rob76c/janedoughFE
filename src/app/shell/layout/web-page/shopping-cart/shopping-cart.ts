@@ -1,12 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { BackButton } from "@/src/app/shared/ui/back-button/back-button";
-import { ListCartItems } from "./list-cart-items/list-cart-items";
-import { WishlistPreview } from "./wishlist-preview/wishlist-preview";
-import { OrderSummary } from "./order-summary/order-summary";
+import { WishlistPreview } from "../../../../domains/cart/feature/wishlist-preview/wishlist-preview";
+import { OrderSummary } from "../../../../domains/cart/feature/order-summary/order-summary";
+import { MatAnchor, MatButton } from "@angular/material/button";
+import { ListCartItems } from "@/src/app/domains/cart/feature/list-cart-items/list-cart-items";
+import { CatalogStore } from '@/src/app/domains/catalog/data-access/catalog.store';
 
 @Component({
   selector: 'app-shopping-cart',
-  imports: [BackButton, ListCartItems, WishlistPreview, OrderSummary],
+  imports: [BackButton, ListCartItems, WishlistPreview, OrderSummary, MatButton],
   template: `
     <div class="mx-auto max-w-[1200px] py-6"> 
       <app-back-button class="mb-6" navigateTo="/products/all">Continue Shopping </app-back-button>
@@ -19,7 +21,13 @@ import { OrderSummary } from "./order-summary/order-summary";
           <webapp-list-cart-items/>
         </div>
         <div> 
-          <webapp-order-summary />
+          <webapp-order-summary>
+            <ng-container actionButtons> 
+              <button matButton="filled" class="w-full mt-6 py-3" (click)="store.proceedToCheckout()">
+                Proceed to Checkout
+              </button>
+          </ng-container>
+          </webapp-order-summary>
 
         </div>
       </div>
@@ -29,4 +37,5 @@ import { OrderSummary } from "./order-summary/order-summary";
 })
 export default class ShoppingCart {
 
+  store = inject(CatalogStore);
 }

@@ -9,6 +9,11 @@ import { DecimalPipe } from '@angular/common';
   template: `
     <div webAppViewPanel> 
       <h2 class="text-2xl font-bold mb-4"> Order Summary</h2>
+
+      <div class="space-y-2 pb-4"> 
+        <ng-content select="[checkoutItems]" />
+      </div>
+
       <div class="space-y-3 text-lg pt-4"> </div>
       <div class="flex justify-between"> 
         <span>Subtotal</span>
@@ -22,6 +27,8 @@ import { DecimalPipe } from '@angular/common';
         <span>Total</span>
         <span>\$ {{total()| number:'1.2-2'}}</span>
       </div>
+
+      <ng-content select="[actionButtons]" /> 
     </div>
   `,
   styles: ``,
