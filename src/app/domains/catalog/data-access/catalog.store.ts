@@ -15,6 +15,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { SignInDialog } from '../../auth/feature/sign-in-dialog/sign-in-dialog';
 import { SignInParams, SignUpParams, User } from '../../auth/model/user';
 import { Router } from '@angular/router';
+import { Order } from '../../checkout/model/order';
+
+//add angulararchitects/ngrxtoolkit and add withStorageSync() to keep data when browser refresh
 
 export type CatalogState = {
   products: Product[];
@@ -22,6 +25,9 @@ export type CatalogState = {
   wishlistItems: Product[];
   cartItems: CartItem[];
   user: User | undefined;
+
+  loading: boolean;
+  selectedProductId: string|undefined;
 };
 
 export const CatalogStore = signalStore(
@@ -101,8 +107,10 @@ export const CatalogStore = signalStore(
     wishlistItems: [],
     cartItems: [],
     user: undefined,
+    loading: false,
+    selectedProductId: undefined,
   } as CatalogState),
-  withComputed(({ selectedCategory, products, wishlistItems, cartItems }) => ({
+  withComputed(({ selectedCategory, products, wishlistItems, cartItems, selectedProductId }) => ({
     filteredProducts: computed(() => {
       if (selectedCategory() === 'all') return products();
       return products().filter(
@@ -111,11 +119,15 @@ export const CatalogStore = signalStore(
     }),
     wishlistCount: computed(() => wishlistItems().length),
     cartCount: computed(() => cartItems().reduce((acc, item) => acc + item.quantity, 0)),
+    selectedProduct: computed(() => products().find((p) => p.productId === selectedProductId())),
   })),
 
   withMethods((store, toaster = inject(Toaster), matDialog = inject(MatDialog), router= inject(Router) ) => ({
     setCategory: signalMethod<string>((category: string) => {
       patchState(store, { selectedCategory: category });
+    }),
+    setProductId: signalMethod<string>((productId: string) => {
+      patchState(store, {selectedProductId: productId});
     }),
 
     addToWishlist: (product: Product) => {
@@ -205,6 +217,30 @@ export const CatalogStore = signalStore(
       return;
     }
     router.navigate(['/checkout']);
+    },
+
+    placeOrder: async () => {
+      patchState(store,{loading:true});
+      const user = store.user();
+      if(!user) {
+        toaster.error('Please login before placing an order');
+        patchState(store, {loading: false});
+        return;
+      }
+      const order: Order = {
+        orderId: crypto.randomUUID(),
+        email: user?.email || "",
+        phoneNumber: user?.phoneNumber || "",
+        orderItems: store.cartItems(),
+        orderDateTime: new Date(),
+        payment: "CARD",
+        totalPrice: Math.round(store.cartItems().reduce((acc,item) => acc + item.quantity * item.product.price, 0)),
+        orderStatus: "Success"
+      };
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      //add summary of orderitems
+      patchState(store, {loading: false, cartItems: []});
+      router.navigate(['order-success'])
     },
 
     signIn: ({ email, password, checkout, dialogId }: SignInParams) => {

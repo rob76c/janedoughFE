@@ -26,5 +26,9 @@ export const routes: Routes = [
 {
     path:'order-success',
     loadComponent: () => import('@/src/app/shell/layout/web-page/order-success/order-success'),
+},
+{
+    path:'product/:productId',
+    loadComponent: () => import('@/src/app/domains/catalog/ui/product-details/product-details'),
 }
 ];

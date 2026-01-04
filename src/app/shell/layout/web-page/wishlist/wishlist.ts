@@ -22,7 +22,7 @@ import { EmptyWishlist } from "@/src/app/shared/ui/empty-wishlist/empty-wishlist
           @for (product of store.wishlistItems(); track product.productId) {
             <products-card [product]="product"> 
               <button
-      class="!absolute top-3 right-2 z-10 bg-white shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg"
+      class="!absolute z-10 top-3 right-3 !bg-white shadow-md rounded-md transition-all duration-200 hover:scale-110 hover:shadow-lg"
       matIconButton
       (click)="store.removeFromWishlist(product)"
     >
