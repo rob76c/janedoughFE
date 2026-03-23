@@ -36,7 +36,7 @@ import { DecimalPipe } from '@angular/common';
 export class OrderSummary {
  store = inject(CatalogStore);
 
- subtotal = computed(() => this.store.cartItems().reduce((acc, item) => acc + item.product.price * item.quantity, 0));
+ subtotal = computed(() => this.store.cartItems().reduce((acc, item) => acc + item.product.specialPrice * item.quantity, 0));
 
  tax = computed(() => 0.05 * this.subtotal());
 

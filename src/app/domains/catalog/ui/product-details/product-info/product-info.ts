@@ -16,7 +16,7 @@ import { ToggleWishlistButton } from "../../toggle-wishlist-button/toggle-wishli
       {{product().category | titlecase}}
     </div>
     <h1 class="text-2xl font-bold mb-3">{{product().productName}}</h1>
-    <p class="text-3xl font-bold mb-4">\${{product().price}}</p>
+    <p class="text-3xl font-bold mb-4">\${{product().specialPrice}}</p>
     <webapp-stock-status class="mb-4" [stock]="product().stock"/>
     <p class="font-semibold mb-2">Description</p>
     <p class="text-gray-600 border-b border-gray-200 pb-4"> {{product().description}}</p>

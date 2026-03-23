@@ -49,7 +49,7 @@ import { SignUpDialog } from '@/src/app/domains/auth/feature/sign-up-dialog/sign
 
       <mat-menu #userMenu="matMenu" xPosition="before">
         <div class="flex flex-col px-3 min-w-[200px]">
-          <span class="text-sm font-medium"> {{ user.name }} </span>
+          <span class="text-sm font-medium"> {{ user.firstName}} </span>
           <span class="text-xs text-gray-500"> {{ user.email }}</span>
         </div>
 

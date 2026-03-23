@@ -14,7 +14,7 @@ import { MatIcon } from "@angular/material/icon";
         <img [src]="item().product.image" class="w-24 h-24 rounded-lg object-cover" />
         <div>
           <div class="text-gray-900 text-lg font-semibold">{{item().product.productName}} </div>
-          <div class="text-gray-600 text-lg">\${{item().product.price}} </div>   
+          <div class="text-gray-600 text-lg">\${{item().product.specialPrice}} </div>   
         </div> 
       </div>
       <webapp-quantity-selector [quantity]="item().quantity" (quantityUpdated)="store.setItemQuantity({productId: item().product.productId, quantity: $event})" />
@@ -40,5 +40,5 @@ export class ShowCartItem {
   item = input.required<CartItem>();
   store = inject(CatalogStore);
 
-  total = computed(() => (this.item().product.price * this.item().quantity).toFixed(2))
+  total = computed(() => (this.item().product.specialPrice * this.item().quantity).toFixed(2))
 }

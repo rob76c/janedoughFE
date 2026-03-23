@@ -15,278 +15,352 @@ import { MatDialog } from '@angular/material/dialog';
 import { SignInDialog } from '../../auth/feature/sign-in-dialog/sign-in-dialog';
 import { SignInParams, SignUpParams, User } from '../../auth/model/user';
 import { Router } from '@angular/router';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Order } from '../../checkout/model/order';
+import { ProductService } from './product.service';
+import { catchError, firstValueFrom, map, of, startWith, switchMap } from 'rxjs';
+import { AuthService } from '../../auth/data-access/auth.service';
+import { CartService } from '../../cart/data-access/cart.service';
 
 //add angulararchitects/ngrxtoolkit and add withStorageSync() to keep data when browser refresh
 
 export type CatalogState = {
-  products: Product[];
-  selectedCategory: string;
+  selectedCategoryId: string;
   wishlistItems: Product[];
   cartItems: CartItem[];
   user: User | undefined;
 
   loading: boolean;
-  selectedProductId: string|undefined;
+  selectedProductId: string | undefined;
+};
+const initialState: CatalogState = {
+  selectedCategoryId: 'all',
+  wishlistItems: [],
+  cartItems: [],
+  user: undefined,
+  loading: false,
+  selectedProductId: undefined,
 };
 
 export const CatalogStore = signalStore(
   {
     providedIn: 'root',
   },
-  withState({
-    products: [
-      {
-        productId: 'CK001',
-        productName: 'Classic Chocolate Chip Cookie',
-        image: 'assets/imgs/chocolatecookie.jpg',
-        description: 'A soft and chewy classic cookie loaded with rich chocolate chips.',
-        stock: 120,
-        price: 2.5,
-        discount: 10,
-        specialPrice: 2.25,
-        category: 'Cookies',
-      },
-      {
-        productId: 'CK002',
-        productName: 'Double Chocolate Cookie',
-        image: 'assets/imgs/doubleChocolateChunk.png',
-        description: 'A decadent chocolate cookie with extra chocolate chunks.',
-        stock: 90,
-        price: 2.75,
-        discount: 15,
-        specialPrice: 2.34,
-        category: 'Cookies',
-      },
-      {
-        productId: 'CK003',
-        productName: 'Oatmeal Raisin Cookie',
-        image: 'assets/imgs/oatmealRaisin.png',
-        description: 'A wholesome oatmeal cookie with sweet raisins and a hint of cinnamon.',
-        stock: 100,
-        price: 2.25,
-        discount: 5,
-        specialPrice: 2.14,
-        category: 'Cookies',
-      },
-      {
-        productId: 'CK004',
-        productName: 'Peanut Butter Smores Cookie',
-        image: 'assets/imgs/PBsmores.png',
-        description: 'A creamy peanut butter cookie with a soft center and crisp edges.',
-        stock: 80,
-        price: 2.6,
-        discount: 0,
-        specialPrice: 2.6,
-        category: 'Cookies',
-      },
-      {
-        productId: 'CK005',
-        productName: 'White Chocolate Macadamia Cookie',
-        image: 'assets/imgs/whitechocolate.png',
-        description: 'A buttery cookie packed with white chocolate chips and macadamia nuts.',
-        stock: 70,
-        price: 3.0,
-        discount: 20,
-        specialPrice: 2.4,
-        category: 'Cookies',
-      },
-      {
-        productId: 'CK006',
-        productName: 'Sugar Cookie',
-        image: 'assets/imgs/sugarcookie.jpg',
-        description: 'A simple, sweet sugar cookie with a soft texture and light vanilla flavor.',
-        stock: 150,
-        price: 2.0,
-        discount: 5,
-        specialPrice: 1.9,
-        category: 'Cookies',
-      },
-    ],
-    selectedCategory: 'all',
-    wishlistItems: [],
-    cartItems: [],
-    user: undefined,
-    loading: false,
-    selectedProductId: undefined,
-  } as CatalogState),
-  withComputed(({ selectedCategory, products, wishlistItems, cartItems, selectedProductId }) => ({
-    filteredProducts: computed(() => {
-      if (selectedCategory() === 'all') return products();
-      return products().filter(
-        (p) => p.category.toLowerCase() === selectedCategory().toLowerCase()
-      );
-    }),
+  withState(initialState),
+  withComputed((store) => {
+    const productService = inject(ProductService);
+    const category$ = toObservable(store.selectedCategoryId);
+    const selectedProductId$ = toObservable(store.selectedProductId);
+
+    const productsSource$ = category$.pipe(
+      switchMap((category) => {
+        const apiCall$ =
+          category === 'all'
+            ? productService.getAllProducts(0, 10)
+            : productService.getProductsByCategory(Number(category), 0, 10);
+
+        return apiCall$.pipe(
+          map((response) => ({ isLoading: false, data: response.content })),
+          startWith({ isLoading: true, data: [] as Product[] }),
+          catchError((err) => {
+            console.error(err);
+            return of({ isLoading: false, data: [] as Product[] });
+          })
+        );
+      })
+    );
+    const productState = toSignal(productsSource$, {
+      initialValue: { isLoading: true, data: [] as Product[] },
+    });
+
+    const productDetailsSource$ = selectedProductId$.pipe(
+      switchMap((id) => {
+        if (!id) return of({ isLoading: false, data: undefined });
+        return productService.getProductById(id).pipe(
+          map((product) => ({ isLoading: false, data: product })),
+          startWith({ isLoading: false, data: undefined }),
+          catchError((err) => {
+            console.error('Error loading product details:', err);
+            return of({ isLoading: false, data: undefined });
+          })
+        );
+      })
+    );
+
+    const selectedProductState = toSignal(productDetailsSource$, {
+      initialValue: { isLoading: false, data: undefined },
+    });
+    return {
+      products: computed(() => productState().data),
+      productsLoading: computed(() => productState().isLoading),
+      selectedProduct: computed(() => selectedProductState().data),
+      selectedProductLoading: computed(() => selectedProductState().isLoading),
+    };
+  }),
+
+  withComputed(({ products, wishlistItems, cartItems, selectedProductId }) => ({
+    filteredProducts: computed(() => products()),
     wishlistCount: computed(() => wishlistItems().length),
     cartCount: computed(() => cartItems().reduce((acc, item) => acc + item.quantity, 0)),
-    selectedProduct: computed(() => products().find((p) => p.productId === selectedProductId())),
   })),
 
-  withMethods((store, toaster = inject(Toaster), matDialog = inject(MatDialog), router= inject(Router) ) => ({
-    setCategory: signalMethod<string>((category: string) => {
-      patchState(store, { selectedCategory: category });
-    }),
-    setProductId: signalMethod<string>((productId: string) => {
-      patchState(store, {selectedProductId: productId});
-    }),
+  withMethods(
+    (store, toaster = inject(Toaster), matDialog = inject(MatDialog), router = inject(Router), authService = inject(AuthService), cartService = inject(CartService)) => ({
+      setCategory: signalMethod<string>((categoryId: string) => {
+        patchState(store, { selectedCategoryId: categoryId });
+      }),
+      setProductId: signalMethod<string>((productId: string) => {
+        patchState(store, { selectedProductId: productId });
+      }),
 
-    addToWishlist: (product: Product) => {
-      const updatedWishListItems = produce(store.wishlistItems(), (draft) => {
-        if (!draft.find((p) => p.productId === product.productId)) {
-          draft.push(product);
+      addToWishlist: (product: Product) => {
+        const updatedWishListItems = produce(store.wishlistItems(), (draft) => {
+          if (!draft.find((p) => p.productId === product.productId)) {
+            draft.push(product);
+          }
+        });
+        patchState(store, { wishlistItems: updatedWishListItems });
+        toaster.success('Product added to wishlist');
+      },
+      removeFromWishlist: (product: Product) => {
+        patchState(store, {
+          wishlistItems: store.wishlistItems().filter((p) => p.productId !== product.productId),
+        });
+      },
+      clearWishlist: () => {
+        patchState(store, { wishlistItems: [] });
+      },
+
+      addToCart: async (product: Product, quantity = 1) => {
+        patchState(store, {loading: true});
+        try {
+          await firstValueFrom(cartService.addProductToCart(product.productId, quantity.toString()));
+        
+        const existingItemIndex = store
+          .cartItems()
+          .findIndex((i) => i.product.productId === product.productId);
+
+        const updatedCartItems = produce(store.cartItems(), (draft) => {
+          if (existingItemIndex !== -1) {
+            draft[existingItemIndex].quantity += quantity;
+            return;
+          }
+          draft.push({
+            product,
+            quantity,
+          });
+        });
+        patchState(store, { cartItems: updatedCartItems });
+        toaster.success(
+          existingItemIndex !== -1 ? 'Product added to cart again!' : 'Product added to cart'
+        );
+      } catch (error:any) {
+        console.error('Add to Cart Error', error);
+        patchState(store,{loading:false});
+        if(error.status === 401) {
+          toaster.error('Please sign in to add items to your cart');
+          matDialog.open(SignInDialog, {disableClose:true});
+        } else {
+          toaster.error('Failed to add product to cart');
         }
-      });
-      patchState(store, { wishlistItems: updatedWishListItems });
-      toaster.success('Product added to wishlist');
-    },
-    removeFromWishlist: (product: Product) => {
-      patchState(store, {
-        wishlistItems: store.wishlistItems().filter((p) => p.productId !== product.productId),
-      });
-    },
-    clearWishlist: () => {
-      patchState(store, { wishlistItems: [] });
-    },
+      }
+      },
 
-    addToCart: (product: Product, quantity = 1) => {
-      const existingItemIndex = store
-        .cartItems()
-        .findIndex((i) => i.product.productId === product.productId);
+      setItemQuantity: async(params: { productId: string; quantity: number }) => {
+        const index = store.cartItems().findIndex((c) => c.product.productId === params.productId);
+        if (index === -1) return;
 
-      const updatedCartItems = produce(store.cartItems(), (draft) => {
-        if (existingItemIndex !== -1) {
-          draft[existingItemIndex].quantity += quantity;
+        const currentQty = store.cartItems()[index].quantity;
+        const newQty = params.quantity;
+
+        const operation = newQty < currentQty ? 'delete': 'add';
+        patchState(store, {loading:true});
+        try{
+          await firstValueFrom(cartService.updateProductfromCart(params.productId, operation));
+          
+          const updated = produce(store.cartItems(), (draft) => {
+          draft[index].quantity = newQty;
+        });
+        patchState(store, { cartItems: updated, loading:false });
+        } catch (error) {
+          console.error('Update Quantity Error', error);
+            toaster.error('Failed to update quantity');
+            patchState(store, { loading: false });
+        }
+      
+      },
+
+      addAllWishlistToCart: () => {
+        const updatedCartItems = produce(store.cartItems(), (draft) =>
+          store.wishlistItems().forEach((p) => {
+            if (!draft.find((c) => c.product.productId === p.productId)) {
+              draft.push({ product: p, quantity: 1 });
+            }
+          })
+        );
+        patchState(store, { cartItems: updatedCartItems, wishlistItems: [] });
+      },
+
+      moveToWishlist: (product: Product) => {
+        const updatedCartItems = store
+          .cartItems()
+          .filter((p) => p.product.productId !== product.productId);
+        const updatedWishListItems = produce(store.wishlistItems(), (draft) => {
+          if (!draft.find((p) => p.productId === product.productId)) {
+            draft.push(product);
+          }
+        });
+        patchState(store, { cartItems: updatedCartItems, wishlistItems: updatedWishListItems });
+      },
+
+      removeFromCart: async (product: Product) => {
+        patchState(store, {loading: true});
+        try {
+          const cart = await firstValueFrom(cartService.getCartByCurentUser());
+          if (cart && cart.cartId) {
+            await firstValueFrom(cartService.deleteProductFromCart(cart.cartId.toString(), product.productId.toString()));
+            patchState(store, {
+          cartItems: store.cartItems().filter((c) => c.product.productId !== product.productId),
+          loading:false
+        });
+        toaster.success('Item removed from cart!')
+          }
+        } catch (error: any) {
+          console.error('Remove from cart error', error);
+          patchState(store, {loading:false});
+          toaster.error('Failed to remove item from cart')
+        }
+      },
+
+      proceedToCheckout: () => {
+        if (!store.user()) {
+          matDialog.open(SignInDialog, {
+            disableClose: true,
+            data: {
+              checkout: true,
+            },
+          });
           return;
         }
-        draft.push({
-          product,
-          quantity,
-        });
-      });
-      patchState(store, { cartItems: updatedCartItems });
-      toaster.success(
-        existingItemIndex !== -1 ? 'Product added to cart again!' : 'Product added to cart'
-      );
-    },
+        router.navigate(['/checkout']);
+      },
 
-    setItemQuantity(params: { productId: string; quantity: number }) {
-      const index = store.cartItems().findIndex((c) => c.product.productId === params.productId);
-      const updated = produce(store.cartItems(), (draft) => {
-        draft[index].quantity = params.quantity;
-      });
-      patchState(store, { cartItems: updated });
-    },
-
-    addAllWishlistToCart: () => {
-      const updatedCartItems = produce(store.cartItems(), (draft) =>
-        store.wishlistItems().forEach((p) => {
-          if (!draft.find((c) => c.product.productId === p.productId)) {
-            draft.push({ product: p, quantity: 1 });
-          }
-        })
-      );
-      patchState(store, { cartItems: updatedCartItems, wishlistItems: [] });
-    },
-
-    moveToWishlist: (product: Product) => {
-      const updatedCartItems = store
-        .cartItems()
-        .filter((p) => p.product.productId !== product.productId);
-      const updatedWishListItems = produce(store.wishlistItems(), (draft) => {
-        if (!draft.find((p) => p.productId === product.productId)) {
-          draft.push(product);
+      placeOrder: async () => {
+        patchState(store, { loading: true });
+        const user = store.user();
+        if (!user) {
+          toaster.error('Please login before placing an order');
+          patchState(store, { loading: false });
+          return;
         }
-      });
-      patchState(store, { cartItems: updatedCartItems, wishlistItems: updatedWishListItems });
-    },
+        const order: Order = {
+          orderId: crypto.randomUUID(),
+          email: user?.email || '',
+          phoneNumber: user?.phoneNumber || '',
+          orderItems: store.cartItems(),
+          orderDateTime: new Date(),
+          payment: 'CARD',
+          totalPrice: Math.round(
+            store.cartItems().reduce((acc, item) => acc + item.quantity * item.product.price, 0)
+          ),
+          orderStatus: 'Success',
+        };
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        //add summary of orderitems
+        patchState(store, { loading: false, cartItems: [] });
+        router.navigate(['order-success']);
+      },
 
-    removeFromCart: (product: Product) => {
-      patchState(store, {
-        cartItems: store.cartItems().filter((c) => c.product.productId !== product.productId),
-      });
-    },
+      signIn: async ({ email, password, checkout, dialogId }: SignInParams) => {
+        patchState(store, {loading:true});
 
-    proceedToCheckout: () => {
-        if (!store.user()) {
-      matDialog.open(SignInDialog, {
-        disableClose: true,
-        data: {
-          checkout: true,
-        },
-      })
-      return;
-    }
-    router.navigate(['/checkout']);
-    },
+        try {
+          const response = await firstValueFrom(authService.signIn({email, password}));
 
-    placeOrder: async () => {
-      patchState(store,{loading:true});
-      const user = store.user();
-      if(!user) {
-        toaster.error('Please login before placing an order');
-        patchState(store, {loading: false});
-        return;
-      }
-      const order: Order = {
-        orderId: crypto.randomUUID(),
-        email: user?.email || "",
-        phoneNumber: user?.phoneNumber || "",
-        orderItems: store.cartItems(),
-        orderDateTime: new Date(),
-        payment: "CARD",
-        totalPrice: Math.round(store.cartItems().reduce((acc,item) => acc + item.quantity * item.product.price, 0)),
-        orderStatus: "Success"
-      };
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      //add summary of orderitems
-      patchState(store, {loading: false, cartItems: []});
-      router.navigate(['order-success'])
-    },
+          const user: User = {
+            userId: response.userId,
+            username: response.username,
+            email: response.email || email,
+            firstName: response.firstName || '',
+            middleName: response.middleName || '',
+            lastName: response.lastName || '',
+            phoneNumber: response.phoneNumber || '',
+            socialMediaHandle: response.socialMediaHandle || '',
+            password: '',
+            image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + response.username
+          };
+          patchState(store, {user, loading: false});
+          toaster.success(`Welcome, ${user.username}`);
 
-    signIn: ({ email, password, checkout, dialogId }: SignInParams) => {
-      patchState(store, {
-        user: {
-          userId: '1',
-          name: 'Robert',
-          username: 'rob76c',
-          email,
-          phoneNumber: '2016268778',
-          socialMediaHandle: 'turntrobbie',
-          password: 'Chusma@133',
-          image: 'example.com'
-        },
-      });
-      
-      matDialog.getDialogById(dialogId)?.close();
+          matDialog.getDialogById(dialogId)?.close();
 
-      if (checkout) {
-        router.navigate(['/checkout']);
-      }
-    },
+        if (checkout) {
+          router.navigate(['/checkout']);
+        }
+        } catch (error: any) {
+          console.error('Login Error: ', error);
+          const errorMessage = error.error?.message || 'Invalid Credentials';
+          toaster.error(errorMessage);
+          patchState(store, {loading: false});
+        }
+      },
 
-    signOut: () => {
-        patchState(store, {user: undefined});
-    },
+      signOut: async () => {
+        patchState(store, { loading:true});
+        try{
+            const response = await firstValueFrom(authService.signOut());
+            patchState(store, {user: undefined, loading:false});
+            toaster.success('Successfully Signed Out!')
+            router.navigate(['/']);
 
-    signUp: ({ name, username, email, phoneNumber, password, checkout, dialogId }: SignUpParams) => {
-      patchState(store, {
-        user: {
-          userId: '1',
-          name: 'Robert',
-          username: 'rob76c',
-          email,
-          phoneNumber: '2016268778',
-          socialMediaHandle: 'turntrobbie',
-          password: 'Chusma@133',
-          image: 'example.com'
-        },
-      });
-      
-      matDialog.getDialogById(dialogId)?.close();
+        } catch (error: any) {
+          console.error('Logout Error: ', error);
+          const errorMessage = error.error?.message || 'Logout Error';
+          toaster.error(errorMessage);
+          patchState(store, {user: undefined, loading:false});
+        }
+      },
 
-      if (checkout) {
-        router.navigate(['/checkout']);
-      }
-    },
-  }))
+      signUp: async ({
+        username,
+        firstName,
+        middleName,
+        lastName,
+        email,
+        phoneNumber,
+        password,
+        socialMediaHandle,
+        checkout,
+        dialogId,
+      }: SignUpParams) => {
+        patchState(store, {loading: true});
+
+        try {
+          await firstValueFrom(
+            authService.signUp(
+              username,
+              firstName,
+              middleName,
+              lastName,
+              email,
+        phoneNumber,
+        password,
+        socialMediaHandle
+            )
+          );
+          toaster.success('Account Created successfully! Please sign in!');
+          matDialog.getDialogById(dialogId)?.close();
+          matDialog.open(SignInDialog, {
+            disableClose: true,
+            data: {checkout},
+          });
+        } catch(error: any) {
+          console.error(error);
+          toaster.error(error.error?.message || 'Registration Failed');
+        } finally {
+          patchState(store, {loading: false});
+        }
+      },
+    })
+  )
 );

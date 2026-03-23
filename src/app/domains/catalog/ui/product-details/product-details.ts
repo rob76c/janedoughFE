@@ -30,6 +30,6 @@ export default class ProductDetails {
     this.store.setProductId(this.productId);
   }
 
-  backRoute = computed(() => `/products/${this.store.selectedCategory()}`);
+  backRoute = computed(() => `/products/${this.store.selectedCategoryId()}`);
 
 }

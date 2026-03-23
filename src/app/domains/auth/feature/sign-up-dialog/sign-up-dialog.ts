@@ -25,7 +25,15 @@ import { SignInDialog } from '../sign-in-dialog/sign-in-dialog';
     </div>  
     <form [formGroup]="signUpForm" class="mt-6 flex flex-col" (ngSubmit)="signUp()">
       <mat-form-field class="mb-4"> 
-        <input formControlName="name" matInput type="text" placeholder="Enter your name" />
+        <input formControlName="firstName" matInput type="text" placeholder="Enter your first name" />
+        <mat-icon matPrefix>person</mat-icon>
+      </mat-form-field>
+      <mat-form-field class="mb-4"> 
+        <input formControlName="middleName" matInput type="text" placeholder="Enter your middle name" />
+        <mat-icon matPrefix>person</mat-icon>
+      </mat-form-field>
+      <mat-form-field class="mb-4"> 
+        <input formControlName="lastName" matInput type="text" placeholder="Enter your last name" />
         <mat-icon matPrefix>person</mat-icon>
       </mat-form-field>
       <mat-form-field class="mb-4"> 
@@ -72,7 +80,9 @@ export class SignUpDialog {
   data = inject<{checkout: boolean}>(MAT_DIALOG_DATA);
 
   signUpForm = this.fb.group({
-    name: ['Jane Dough', Validators.required],
+    firstName: ['Jane', Validators.required],
+    middleName: ['Cookie', Validators.required],
+    lastName: ['Dough', Validators.required],
     username: ['cookiemonster', Validators.required],
     email: ['janed@test.com', Validators.required],
     phoneNumber: ['2016268778', Validators.required],
@@ -85,8 +95,8 @@ export class SignUpDialog {
       this.signUpForm.markAllAsTouched();
       return;
     }
-    const {name, username, email, phoneNumber, password} = this.signUpForm.value;
-    this.store.signUp({name, username, email, phoneNumber, password, dialogId: this.dialogRef.id, checkout: this.data?.checkout} as SignUpParams)
+    const {firstName, middleName, lastName, username, email, phoneNumber, password} = this.signUpForm.value;
+    this.store.signUp({firstName, middleName, lastName, username, email, phoneNumber, password, dialogId: this.dialogRef.id, checkout: this.data?.checkout} as SignUpParams)
   }
 
   openSignInDialog() {
