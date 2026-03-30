@@ -24,5 +24,15 @@ export type SignUpParams = {
     dialogId: string;
 }
 
+export type SignInResponse = {
+    id: string;
+    username: string;
+    email: string;
+    jwtToken: string;
+    phoneNumber: string;
+    roles: string[];
+}
+
+
 export type SignInParams = Omit<SignUpParams, 'username'| 'firstName'|'middleName' | 'lastName'| 'phoneNumber'|'socialMediaHandle'>;
 export type SignInApiParams = Omit<SignInParams, 'dialogId' | 'checkout'>;
