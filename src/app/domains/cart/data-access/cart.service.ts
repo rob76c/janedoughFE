@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Cart } from '../model/cart';
+import { CartItem } from '../../catalog/model/cart-item';
 
 @Injectable({
   providedIn: 'root',
@@ -28,3 +29,14 @@ export class CartService {
     return this.http.delete(`${this.url}/${cartId}/product/${productId}`, {withCredentials:true, responseType: 'text'});
   }
 }
+
+export const loadCartFromStorage = (): CartItem[] => {
+  try {
+    const storedCart = localStorage.getItem('cartItems');
+    return storedCart ? JSON.parse(storedCart) : [];
+  } catch (error) {
+    console.error('Error loading cart from local storage', error);
+    return [];
+  }
+};
+

@@ -1,10 +1,11 @@
-import { computed, inject } from '@angular/core';
+import { computed, effect, inject } from '@angular/core';
 import { Product } from '../model/product';
 import {
   patchState,
   signalMethod,
   signalStore,
   withComputed,
+  withHooks,
   withMethods,
   withState,
 } from '@ngrx/signals';
@@ -16,11 +17,11 @@ import { SignInDialog } from '../../auth/feature/sign-in-dialog/sign-in-dialog';
 import { SignInParams, SignUpParams, User } from '../../auth/model/user';
 import { Router } from '@angular/router';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { Order } from '../../checkout/model/order';
 import { ProductService } from './product.service';
 import { catchError, firstValueFrom, map, of, startWith, switchMap } from 'rxjs';
-import { AuthService } from '../../auth/data-access/auth.service';
-import { CartService } from '../../cart/data-access/cart.service';
+import { AuthService, loadUserFromStorage } from '../../auth/data-access/auth.service';
+import { CartService, loadCartFromStorage } from '../../cart/data-access/cart.service';
+import { ShippingAddress } from '../../orders/model/order';
 
 //add angulararchitects/ngrxtoolkit and add withStorageSync() to keep data when browser refresh
 
@@ -32,14 +33,18 @@ export type CatalogState = {
 
   loading: boolean;
   selectedProductId: string | undefined;
+
+  selectedAddress: ShippingAddress | undefined;
 };
+
 const initialState: CatalogState = {
   selectedCategoryId: 'all',
   wishlistItems: [],
-  cartItems: [],
-  user: undefined,
+  cartItems: loadCartFromStorage(),
+  user: loadUserFromStorage(),
   loading: false,
   selectedProductId: undefined,
+  selectedAddress: undefined,
 };
 
 export const CatalogStore = signalStore(
@@ -130,6 +135,15 @@ export const CatalogStore = signalStore(
       clearWishlist: () => {
         patchState(store, { wishlistItems: [] });
       },
+
+      clearCart: () => {
+        patchState(store, { cartItems: [] });
+      },
+
+      setSelectedAddress: signalMethod<any>((address: any) => {
+      patchState(store, { selectedAddress: address });
+    }),
+
 
       addToCart: async (product: Product, quantity = 1) => {
         patchState(store, {loading: true});
@@ -245,31 +259,7 @@ export const CatalogStore = signalStore(
         router.navigate(['/checkout']);
       },
 
-      placeOrder: async () => {
-        patchState(store, { loading: true });
-        const user = store.user();
-        if (!user) {
-          toaster.error('Please login before placing an order');
-          patchState(store, { loading: false });
-          return;
-        }
-        const order: Order = {
-          orderId: crypto.randomUUID(),
-          email: user?.email || '',
-          phoneNumber: user?.phoneNumber || '',
-          orderItems: store.cartItems(),
-          orderDateTime: new Date(),
-          payment: 'CARD',
-          totalPrice: Math.round(
-            store.cartItems().reduce((acc, item) => acc + item.quantity * item.product.price, 0)
-          ),
-          orderStatus: 'Success',
-        };
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        //add summary of orderitems
-        patchState(store, { loading: false, cartItems: [] });
-        router.navigate(['order-success']);
-      },
+      
 
       signIn: async ({ email, password, checkout, dialogId }: SignInParams) => {
         patchState(store, {loading:true});
@@ -289,7 +279,28 @@ export const CatalogStore = signalStore(
             password: '',
             image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + response.username
           };
-          patchState(store, {user, loading: false});
+
+          let fetchedCartItems: CartItem[] = [];
+          try {
+            const cart = await firstValueFrom(cartService.getCartByCurentUser());
+            if (cart) {
+              fetchedCartItems = cart.items.map((item: any) => ({
+                quantity: item.quantity,
+                product: {
+                  productId: item.productId,
+                  productName: item.productName,
+                  stock: item.stock,
+                  price: item.price,
+                  discount: item.discount,
+                  specialPrice: item.specialPrice,
+                }
+              }));
+            }
+          } catch (cartError) {
+            console.error('Failed to fetch user cart upon sign in', cartError);
+          }
+
+          patchState(store, {user, cartItems: fetchedCartItems, loading: false});
           toaster.success(`Welcome, ${user.username}`);
 
           matDialog.getDialogById(dialogId)?.close();
@@ -309,7 +320,7 @@ export const CatalogStore = signalStore(
         patchState(store, { loading:true});
         try{
             const response = await firstValueFrom(authService.signOut());
-            patchState(store, {user: undefined, loading:false});
+            patchState(store, {user: undefined, cartItems: [],loading:false});
             toaster.success('Successfully Signed Out!')
             router.navigate(['/']);
 
@@ -362,5 +373,21 @@ export const CatalogStore = signalStore(
         }
       },
     })
-  )
+  ),
+  withHooks({
+    onInit(store) {
+      effect(() => {
+        localStorage.setItem('cartItems', JSON.stringify(store.cartItems()));
+      });
+
+      effect(() => {
+        const user = store.user();
+        if (user) {
+          localStorage.setItem('user', JSON.stringify(user));
+        } else {
+          localStorage.removeItem('user');
+        }
+      });
+    }
+  })
 );

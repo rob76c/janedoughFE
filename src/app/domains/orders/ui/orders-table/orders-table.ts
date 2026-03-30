@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { DatePipe, CurrencyPipe, TitleCasePipe } from '@angular/common';
-import { Order } from '../../../checkout/model/order';
+import { OrderSummary } from '../../model/order';
+
 
 
 @Component({
@@ -65,6 +66,6 @@ import { Order } from '../../../checkout/model/order';
   `,
 })
 export class OrdersTable {
-  orders = input.required<Order[]>();
+  orders = input.required<OrderSummary[]>();
   displayedColumns: string[] = ['order', 'orderDate', 'amount', 'status'];
 }

@@ -7,12 +7,16 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '@/src/environments/environment';
 import { CatalogStore } from '../../../catalog/data-access/catalog.store';
 import { patchState } from '@ngrx/signals';
+import { OrderService } from '../../../orders/data-access/order.service';
+import { Router } from '@angular/router';
+import { CheckoutStore } from '../../data-access/checkout.store';
+import { DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'webapp-payment-form',
-  imports: [MatIcon, ViewPanel, MatRadioButton, MatRadioGroup],
+  imports: [MatIcon, ViewPanel, MatRadioButton, MatRadioGroup, DecimalPipe],
   template: `
-    <div webAppViewPanel> 
+    <div webAppViewPanel id="payment-section"> 
       <h2 class="text-2xl font-bold mb-6 flex items-center gap-2"> 
         <mat-icon>payment</mat-icon>
         Payment Options
@@ -32,13 +36,13 @@ import { patchState } from '@ngrx/signals';
         <button 
           id="submit" 
           type="submit" 
-          [disabled]="store.loading() || !stripeElements()"
+          [disabled]="checkoutStore.loading() || !stripeElements()"
           class="w-full bg-[#0055DE] hover:brightness-110 text-white font-semibold py-3 px-4 rounded-md shadow-[0px_4px_5.5px_0px_rgba(0,0,0,0.07)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center h-12"
         >
-          @if (store.loading()) {
+          @if (isLoading()) {
             <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
           } @else {
-            <span>Pay now</span>
+            <span>Pay now \${{ totalAmount() | number:'1.2-2' }}</span>
           }
         </button>
 
@@ -55,14 +59,17 @@ export class PaymentForm implements OnInit {
   @ViewChild('paymentElement', { static: true }) paymentElementRef!: ElementRef;
 
   // Injections
-  store = inject(CatalogStore);
+  checkoutStore = inject(CheckoutStore);
   http = inject(HttpClient);
+  orderService = inject(OrderService);
+  router = inject(Router);
 
   // Local Signals
   stripe = signal<Stripe | null>(null);
   stripeElements = signal<StripeElements | null>(null);
   isLoading = signal(false); // Using local state for form submission
   errorMessage = signal<string | null>(null);
+  totalAmount = signal<number>(0);
 
   async ngOnInit() {
     // Initialize Stripe using the Publishable Key from environment
@@ -72,19 +79,23 @@ export class PaymentForm implements OnInit {
   }
 
   initializeStripe() {
-    const cartItems = this.store.cartItems();
-    const user = this.store.user();
+    const cartItems = this.checkoutStore.cartItems();
+    const user = this.checkoutStore.user();
+    const address = this.checkoutStore.selectedAddress();
 
     if (cartItems.length === 0) return;
+    if (!user || !address) return;
 
     // Calculate total in cents for Stripe
-    const totalAmount = Math.round(
-      cartItems.reduce((acc, item) => acc + item.product.specialPrice * item.quantity, 0) * 100
-    );
-
+    const subtotal = cartItems.reduce((acc, item) => acc + item.product.specialPrice * item.quantity, 0);
+    const tax = 0.06625 * subtotal;
+    const totalAmount = subtotal + tax;
+    const stripeTotalAmount = Math.round((subtotal + tax) * 100);
+    this.totalAmount.set(totalAmount);
+    
     // Build payload matching your backend StripePaymentDto
     const stripePaymentDto = {
-      amount: totalAmount,
+      amount: stripeTotalAmount,
       currency: 'usd',
       email: user?.email || '',
       phoneNumber: user?.phoneNumber || '',
@@ -93,11 +104,11 @@ export class PaymentForm implements OnInit {
       // Note: Providing a dummy address so StripeServiceImpl.java doesn't throw NullPointerException.
       // You should eventually pass the real address values from your ShippingForm.
       address: {
-        street: '123 Cookie Ln',
-        city: 'Jersey City',
-        state: 'NJ',
-        zip: '07302',
-        country: 'US'
+        street: address.street,
+        city: address.city,
+        state: address.state,
+        zip: address.zip,
+        country: address.country
       }
     };
 
@@ -131,28 +142,58 @@ export class PaymentForm implements OnInit {
     e.preventDefault();
     const stripeInstance = this.stripe();
     const elements = this.stripeElements();
+    const selectedAddress = this.checkoutStore.selectedAddress();
 
     if (!stripeInstance || !elements) return;
 
     // Trigger local loading signal
     this.isLoading.set(true);
 
-    const { error } = await stripeInstance.confirmPayment({
+    const { error, paymentIntent } = await stripeInstance.confirmPayment({
       elements,
       confirmParams: {
-        // Change this to match your success route
         return_url: "http://localhost:4200/order-success",
       },
+      redirect: 'if_required' 
     });
 
-    if (error && (error.type === "card_error" || error.type === "validation_error")) {
-      this.showMessage(error.message || 'An error occurred.');
-    } else if (error) {
-      this.showMessage("An unexpected error occurred.");
+    if (error) {
+      if (error.type === "card_error" || error.type === "validation_error") {
+        this.showMessage(error.message || 'An error occurred.');
+      } else {
+        this.showMessage("An unexpected error occurred.");
+      }
+      this.isLoading.set(false);
+      return;
     }
 
-    // Turn off local loading state if payment fails/redirect doesn't happen
-    this.isLoading.set(false);
+    // Payment is confirmed successfully! Create the backend Order.
+    if (paymentIntent && selectedAddress && paymentIntent.status === 'succeeded') {
+      const orderRequest = {
+        addressId: selectedAddress.addressId, // Ensure this matches an actual address ID logic later from your Shipping Form
+        paymentMethod: 'ONLINE',
+        pgName: 'Stripe',
+        pgPaymentId: paymentIntent.id,
+        pgStatus: paymentIntent.status,
+        pgResponseMessage: 'Payment Successful'
+      };
+
+      this.orderService.orderCompleted('ONLINE', orderRequest).subscribe({
+        next: (order) => {
+          // Clear frontend cart items inside the store to reflect empty cart
+          this.checkoutStore.clearCart();
+          this.isLoading.set(false);
+          this.router.navigate(['/order-success']);
+        },
+        error: (err) => {
+          console.error('Order Backend Error:', err);
+          this.showMessage('Payment succeeded, but order creation failed. Please contact support.');
+          this.isLoading.set(false);
+        }
+      });
+    } else {
+      this.isLoading.set(false);
+    }
   }
 
   showMessage(messageText: string) {

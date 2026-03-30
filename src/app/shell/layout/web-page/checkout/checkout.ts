@@ -1,14 +1,16 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { BackButton } from '@/src/app/shared/ui/back-button/back-button';
 import { ShippingForm } from '@/src/app/domains/checkout/feature/shipping-form/shipping-form';
 import { PaymentForm } from '@/src/app/domains/checkout/feature/payment-form/payment-form';
 import { OrderSummary } from '@/src/app/domains/cart/feature/order-summary/order-summary';
 import { CatalogStore } from '@/src/app/domains/catalog/data-access/catalog.store';
 import { MatButton } from '@angular/material/button';
+import { AddressPicker } from "@/src/app/domains/checkout/feature/address-picker/address-picker";
+import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.store';
 
 @Component({
   selector: 'webapp-checkout',
-  imports: [BackButton, ShippingForm, PaymentForm, OrderSummary, MatButton],
+  imports: [BackButton, ShippingForm, PaymentForm, OrderSummary, MatButton, AddressPicker],
   template: `
     <div class="mx-auto max-w-[1200px] py-6">
       <app-back-button class="mb-4" navigateTo="/cart">Back to Cart</app-back-button>
@@ -16,16 +18,25 @@ import { MatButton } from '@angular/material/button';
 
       <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div class="lg:col-span-3 flex flex-col gap-6">
-          <webapp-shipping-form />
-          <webapp-payment-form />
+
+        @if (isCreatingAddress()) {
+            <webapp-shipping-form 
+              (addressCreated)="onAddressCreated($event)"
+              (cancel)="isCreatingAddress.set(false)" />
+          } @else {
+          <webapp-address-picker (addressSelected)="checkoutStore.setSelectedAddress($event)" (createNew)="isCreatingAddress.set(true)"/>
+          }
+          @if (checkoutStore.selectedAddress()) {
+              <webapp-payment-form />
+            }
         </div>
         <div class="lg: col-span-2">
           <webapp-order-summary>
             <ng-container checkoutItems>
-              @for (item of store.cartItems(); track item.product.productId) {
+              @for (item of checkoutStore.cartItems(); track item.product.productId) {
               <div class="text-sm flex justify-between">
                 <span>{{ item.product.productName }} x {{ item.quantity }}</span>
-                <span>\${{ (item.product.price * item.quantity).toFixed(2) }} </span>
+                <span>\${{ (item.product.specialPrice * item.quantity).toFixed(2) }} </span>
               </div>
               }
             </ng-container>
@@ -34,10 +45,10 @@ import { MatButton } from '@angular/material/button';
               <button
                 matButton="filled"
                 class="w-full mt-6 py-3"
-                [disabled]="store.loading()"
-                (click)="store.placeOrder()"
+                [disabled]="checkoutStore.loading()"
+                (click)="scrollToPayment()"
               >
-                {{ store.loading() ? 'Processing...' : 'Place Order' }}
+                Scroll Down 👇👇
               </button>
             </ng-container>
           </webapp-order-summary>
@@ -48,5 +59,20 @@ import { MatButton } from '@angular/material/button';
   styles: ``,
 })
 export default class Checkout {
-  store = inject(CatalogStore);
+  checkoutStore = inject(CheckoutStore);
+  isCreatingAddress = signal(false);
+
+  onAddressCreated(newAddress: any) {
+    // Switch back to the picker view. Since it uses an @if block, Angular will
+    // destroy and recreate the AddressPicker component, naturally triggering 
+    // its ngOnInit to fetch the updated list of addresses!
+    this.isCreatingAddress.set(false);
+  }
+
+  scrollToPayment() {
+    const paymentSection = document.getElementById('payment-section');
+    if (paymentSection) {
+      paymentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 }

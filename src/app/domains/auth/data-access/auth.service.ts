@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { SignInApiParams, SignInParams } from '../model/user';
+import { SignInApiParams, SignInParams, User } from '../model/user';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -41,3 +41,13 @@ export class AuthService {
     return this.http.post(`${this.url}/signout`, {withCredentials:true})
   }
 }
+
+export const loadUserFromStorage = (): User | undefined => {
+  try {
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : undefined;
+  } catch (error) {
+    console.error('Error loading user from local storage', error);
+    return undefined;
+  }
+};

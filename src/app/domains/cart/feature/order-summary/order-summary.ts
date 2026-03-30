@@ -38,7 +38,7 @@ export class OrderSummary {
 
  subtotal = computed(() => this.store.cartItems().reduce((acc, item) => acc + item.product.specialPrice * item.quantity, 0));
 
- tax = computed(() => 0.05 * this.subtotal());
+ tax = computed(() => 0.06625 * this.subtotal());
 
 
  total = computed(() => this.tax() + this.subtotal())

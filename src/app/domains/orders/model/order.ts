@@ -1,6 +1,8 @@
 import { z } from 'zod';
+import { CartItem } from '../../catalog/model/cart-item';
 
 export const ShippingAddressSchema = z.object({
+  addressId: z.number(),
   firstName: z.string(),
   middleName: z.string(),
   lastName: z.string(),
@@ -11,6 +13,15 @@ export const ShippingAddressSchema = z.object({
   zip: z.string(),
   country: z.string(),
 });
+
+export const orderRequestSchema = z.object({
+  addressId: z.number(),
+  paymentMethod: z.string(),
+  pgName: z.string(),
+  pgPaymentId: z.string(),
+  pgStatus: z.string(),
+  pgResponseMessage: z.string(),
+})
 
 export const OrderSchema = z.object({
   orderId: z.string(),
@@ -50,3 +61,17 @@ export const OrderSchema = z.object({
 
 export type ShippingAddress = z.infer<typeof ShippingAddressSchema>;
 export type Order = z.infer<typeof OrderSchema>;
+
+export type OrderRequest = z.infer<typeof orderRequestSchema>;
+
+export type OrderSummary = {
+    orderId: string;
+    email: string;
+    phoneNumber: string;
+    orderItems: CartItem[];
+    orderDateTime: Date;
+    payment: string;
+    totalPrice: number;
+    orderStatus: string;
+}
+

@@ -1,5 +1,6 @@
 import { signalStore, withState } from "@ngrx/signals";
-import { Order } from "../../checkout/model/order"
+import { Order } from "../model/order";
+
 
 export type OrdersState = {
     orders: Order[];
