@@ -8,6 +8,7 @@ import { MatInput } from '@angular/material/input';
 import { SignInParams } from '../../model/user';
 import { CatalogStore } from '../../../catalog/data-access/catalog.store';
 import { SignUpDialog } from '../sign-up-dialog/sign-up-dialog';
+import { AuthStore } from '../../data-access/auth.store';
 
 @Component({
   selector: 'app-sign-in-dialog',
@@ -59,7 +60,7 @@ import { SignUpDialog } from '../sign-up-dialog/sign-up-dialog';
 })
 export class SignInDialog {
   fb = inject(NonNullableFormBuilder);
-  store = inject(CatalogStore);
+  store = inject(AuthStore);
   data = inject<{checkout:boolean}>(MAT_DIALOG_DATA);
   dialogRef = inject(MatDialogRef);
   matDialog = inject(MatDialog);

@@ -1,14 +1,16 @@
 export type User = {
     userId: string;
-    firstName: string;
-    middleName: string;
-    lastName: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     username: string;
     email: string;
     phoneNumber: string;
-    password: string;
-    socialMediaHandle: string;
+    password?: string;
+    socialMediaHandle?: string;
     image?:string;
+    jwtToken?: string;
+    roles?: string[];
 }
 
 export type SignUpParams = {

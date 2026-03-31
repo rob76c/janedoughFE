@@ -9,6 +9,7 @@ import { MatDivider } from '@angular/material/divider';
 import { SignInDialog } from '@/src/app/domains/auth/feature/sign-in-dialog/sign-in-dialog';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { SignUpDialog } from '@/src/app/domains/auth/feature/sign-up-dialog/sign-up-dialog';
+import { AuthStore } from '@/src/app/domains/auth/data-access/auth.store';
 
 @Component({
   selector: 'webapp-header-actions',
@@ -42,7 +43,7 @@ import { SignUpDialog } from '@/src/app/domains/auth/feature/sign-up-dialog/sign
         <mat-icon>shopping_cart</mat-icon>
       </button>
 
-      @if (store.user(); as user) {
+      @if (authStore.user(); as user) {
       <button matIconButton [matMenuTriggerFor]="userMenu">
         <img [src]="user.image" [alt]="user.username" class="w-8 h-8 rounded-full" />
       </button>
@@ -55,7 +56,7 @@ import { SignUpDialog } from '@/src/app/domains/auth/feature/sign-up-dialog/sign
 
         <mat-divider> </mat-divider>
 
-        <button class="!min-h-[32px]" mat-menu-item (click)="store.signOut()">
+        <button class="!min-h-[32px]" mat-menu-item (click)="authStore.signOut()">
           <mat-icon>logout</mat-icon>
           Sign Out
         </button>
@@ -71,6 +72,7 @@ import { SignUpDialog } from '@/src/app/domains/auth/feature/sign-up-dialog/sign
 })
 export class HeaderActions {
   store = inject(CatalogStore);
+  authStore = inject(AuthStore);
   matDialog = inject(MatDialog)
 
   openSignInDialog() {

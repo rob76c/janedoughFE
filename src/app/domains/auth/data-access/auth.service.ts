@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { SignInApiParams, SignInParams, User } from '../model/user';
+import { SignInApiParams, SignInParams, SignInResponse, User } from '../model/user';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -33,8 +33,8 @@ export class AuthService {
     });
   }
 
-  signIn({email,password}: SignInApiParams):Observable<any> {
-    return this.http.post(`${this.url}/signin`,{email, password}, {withCredentials:true});
+  signIn({email,password}: SignInApiParams):Observable<SignInResponse> {
+    return this.http.post<SignInResponse>(`${this.url}/signin`,{email, password}, {withCredentials:true});
   }
 
   signOut() {
@@ -42,12 +42,31 @@ export class AuthService {
   }
 }
 
-export const loadUserFromStorage = (): User | undefined => {
+export const loadSessionFromStorage = (): SignInResponse | undefined => {
   try {
-    const storedUser = localStorage.getItem('user');
-    return storedUser ? JSON.parse(storedUser) : undefined;
+    const storedSession = localStorage.getItem('signInResponse');
+    return storedSession ? JSON.parse(storedSession) : undefined;
   } catch (error) {
-    console.error('Error loading user from local storage', error);
+    console.error('Error loading session from local storage', error);
     return undefined;
   }
+};
+
+export const loadUserFromSession = (): User | undefined => {
+  const session = loadSessionFromStorage();
+  if (!session) return undefined;
+  
+  return {
+    userId: session.id.toString(),
+    username: session.username,
+    email: session.email,
+    phoneNumber: session.phoneNumber,
+    // Provide fallback defaults for fields not included in the response
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    password: '',
+    socialMediaHandle: '',
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + session.username
+  };
 };

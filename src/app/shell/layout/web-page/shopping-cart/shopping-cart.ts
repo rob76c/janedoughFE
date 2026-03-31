@@ -8,6 +8,7 @@ import { CatalogStore } from '@/src/app/domains/catalog/data-access/catalog.stor
 import { MatFormField } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.store';
 
 @Component({
   selector: 'app-shopping-cart',
@@ -63,5 +64,5 @@ import { CdkTextareaAutosize } from '@angular/cdk/text-field';
   styles: ``,
 })
 export default class ShoppingCart {
-  store = inject(CatalogStore);
+  store = inject(CheckoutStore);
 }
