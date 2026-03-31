@@ -29,7 +29,6 @@ export type CatalogState = {
   selectedCategoryId: string;
   wishlistItems: Product[];
   cartItems: CartItem[];
-  authSession: SignInResponse | undefined;
 
   loading: boolean;
   selectedProductId: string | undefined;
@@ -41,7 +40,6 @@ const initialState: CatalogState = {
   selectedCategoryId: 'all',
   wishlistItems: [],
   cartItems: loadCartFromStorage(),        
-  authSession: loadSessionFromStorage(),
   loading: false,
   selectedProductId: undefined,
   selectedAddress: undefined,

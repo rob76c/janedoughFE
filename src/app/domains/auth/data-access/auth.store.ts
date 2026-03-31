@@ -1,8 +1,8 @@
-import { patchState, signalStore, withHooks, withMethods, withState } from "@ngrx/signals";
+import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from "@ngrx/signals";
 import { SignInParams, SignInResponse, SignUpParams, User } from "../model/user";
 import { AuthService, loadSessionFromStorage, loadUserFromSession } from "./auth.service";
 import { firstValueFrom } from "rxjs";
-import { effect, inject } from "@angular/core";
+import { computed, effect, inject } from "@angular/core";
 import { Toaster } from "@/src/app/core/notification/toaster.service";
 import { MatDialog } from "@angular/material/dialog";
 import { Router } from "@angular/router";
@@ -16,20 +16,22 @@ export type AuthState = {
     user: User | undefined;
     authSession: SignInResponse | undefined;
     loading: boolean;
-    cartItems: CartItem[];
 };
 
 const initialState: AuthState = {
   user: loadUserFromSession(),            
   authSession: loadSessionFromStorage(),
   loading: false,
-  cartItems: loadCartFromStorage(),
 };
 
 export const AuthStore = signalStore(
     { providedIn: 'root' },
 
     withState(initialState),
+
+    withComputed((store, catalogStore = inject(CatalogStore)) => ({
+        cartItems: computed(() => catalogStore.cartItems())
+    })),
 
     withMethods((store, toaster = inject(Toaster), matDialog = inject(MatDialog), router = inject(Router), authService = inject(AuthService), cartService = inject(CartService), catalogStore= inject(CatalogStore)) => ({
         
@@ -72,7 +74,7 @@ export const AuthStore = signalStore(
             console.error('Failed to fetch user cart upon sign in', cartError);
           }
 
-          patchState(store, {user, cartItems: fetchedCartItems, loading: false});
+          patchState(store, {user, loading: false});
           catalogStore.setCartItems(fetchedCartItems);
           toaster.success(`Welcome, ${user.username}`);
 
@@ -93,7 +95,7 @@ export const AuthStore = signalStore(
         patchState(store, { loading:true});
         try{
             const response = await firstValueFrom(authService.signOut());
-            patchState(store, {user: undefined, cartItems: [],loading:false});
+            patchState(store, {user: undefined,loading:false});
             catalogStore.clearCart();
             toaster.success('Successfully Signed Out!')
             router.navigate(['/']);
@@ -151,10 +153,6 @@ export const AuthStore = signalStore(
 
   withHooks({
     onInit(store) {
-      effect(() => {
-        localStorage.setItem('cartItems', JSON.stringify(store.cartItems()));
-      });
-
       effect(() => {
         const user = store.user();
         if (user) {
