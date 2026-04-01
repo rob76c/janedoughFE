@@ -32,8 +32,6 @@ export type CatalogState = {
 
   loading: boolean;
   selectedProductId: string | undefined;
-
-  selectedAddress: ShippingAddress | undefined;
 };
 
 const initialState: CatalogState = {
@@ -42,7 +40,6 @@ const initialState: CatalogState = {
   cartItems: loadCartFromStorage(),        
   loading: false,
   selectedProductId: undefined,
-  selectedAddress: undefined,
 };
 
 export const CatalogStore = signalStore(
@@ -140,11 +137,6 @@ export const CatalogStore = signalStore(
       clearCart: () => {
         patchState(store, { cartItems: [] });
       },
-
-      setSelectedAddress: signalMethod<any>((address: any) => {
-      patchState(store, { selectedAddress: address });
-      }),
-
 
       addToCart: async (product: Product, quantity = 1) => {
         patchState(store, {loading: true});

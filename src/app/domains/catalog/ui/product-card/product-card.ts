@@ -61,7 +61,7 @@ export class ProductsCard {
     return cartItem ? cartItem.quantity : 0;
   });
 
-  // Handler for the quantity selector emissions
+
   updateQuantity(newQuantity: number) {
     this.store.setItemQuantity({ 
       productId: this.product().productId, 
