@@ -6,10 +6,11 @@ import { MatInput } from '@angular/material/input';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AddressService } from '../../data-access/address.service';
 import { Toaster } from '@/src/app/core/notification/toaster.service';
+import { MatButton } from '@angular/material/button';
 
 @Component({
   selector: 'webapp-shipping-form',
-  imports: [ViewPanel, MatIcon, MatFormField, MatInput, ReactiveFormsModule],
+  imports: [ViewPanel, MatIcon, MatFormField, MatInput, ReactiveFormsModule, MatButton],
   template: `
     <div webAppViewPanel> 
       <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -19,25 +20,25 @@ import { Toaster } from '@/src/app/core/notification/toaster.service';
 
       <form [formGroup]="addressForm" (ngSubmit)="onSubmit()" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <mat-form-field> 
-        <input matInput type="text" placeholder="First Name" />
+        <input matInput formControlName="firstName" type="text" placeholder="First Name" />
       </mat-form-field>
       <mat-form-field> 
-        <input matInput type="text" placeholder="Last Name" />
+        <input matInput formControlName="lastName" type="text" placeholder="Last Name" />
       </mat-form-field>
       <mat-form-field class="col-span-2"> 
-        <input matInput type="text" placeholder="Address" />
+        <input matInput formControlName="street" type="text" placeholder="Address" />
       </mat-form-field>
       <mat-form-field class="col-span-2"> 
-        <input matInput type="text" placeholder="Address 2" />
+        <input matInput formControlName="addressLine2" type="text" placeholder="Address 2" />
       </mat-form-field>
       <mat-form-field> 
-        <input matInput type="text" placeholder="City" />
+        <input matInput formControlName="city" type="text" placeholder="City" />
       </mat-form-field>
       <mat-form-field> 
-        <input matInput type="text" placeholder="State" />
+        <input matInput formControlName="state" type="text" placeholder="State" />
       </mat-form-field>
       <mat-form-field class="col-span-2"> 
-        <input matInput type="text" placeholder="Zip" />
+        <input matInput formControlName="zip" type="text" placeholder="Zip" />
       </mat-form-field>
       
       <div class="col-span-2 flex justify-end gap-3 mt-2">

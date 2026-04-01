@@ -64,14 +64,22 @@ export type Order = z.infer<typeof OrderSchema>;
 
 export type OrderRequest = z.infer<typeof orderRequestSchema>;
 
-export type OrderSummary = {
-    orderId: string;
-    email: string;
-    phoneNumber: string;
-    orderItems: CartItem[];
-    orderDateTime: Date;
-    payment: string;
-    totalPrice: number;
-    orderStatus: string;
+// export type OrderSummary = {
+//     orderId: string;
+//     email: string;
+//     phoneNumber: string;
+//     orderItems: CartItem[];
+//     orderDateTime: Date;
+//     payment: string;
+//     totalPrice: number;
+//     orderStatus: string;
+// }
+export interface OrderResponse {
+  content: Order[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  lastPage: boolean;
 }
 

@@ -1,4 +1,4 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { Product } from '../../../model/product';
 import { TitleCasePipe } from '@angular/common';
 import { StockStatus } from "../stock-status/stock-status";
@@ -22,13 +22,32 @@ import { ToggleWishlistButton } from "../../toggle-wishlist-button/toggle-wishli
     <p class="text-gray-600 border-b border-gray-200 pb-4"> {{product().description}}</p>
     <div class="flex items-center gap-2 mb-3 pt-4">
       <span class="font-semibold">Quantity</span>
-      <webapp-quantity-selector [quantity]="quantity()" (quantityUpdated)="quantity.set($event)" /> 
+
+      @if (quantityInCart() > 0) {
+        <webapp-quantity-selector 
+          [quantity]="quantityInCart()" 
+          (quantityUpdated)="updateQuantity($event)" 
+        />
+      } @else {
+        <webapp-quantity-selector 
+          [quantity]="quantity()" 
+          (quantityUpdated)="quantity.set($event)" 
+        /> 
+      }
     </div>
+
     <div class="flex gap-4 mb border-b border-gray-200 pb-4"> 
+      @if (quantityInCart() === 0) {
       <button matButton="filled" class="w-2/3 flex items-center gap-2" (click)="store.addToCart(product(), quantity())" [disabled]="(product().stock<1)" > 
         <mat-icon>shopping_cart</mat-icon>
         {{(product().stock >1) ? 'Add to Cart' : 'Out of Stock'}}
       </button>
+      } @else {
+        <div class="w-2/3 flex items-center text-green-700 font-medium">
+          <mat-icon class="mr-2">check_circle</mat-icon> Added to Cart
+        </div>
+      }
+      
       <webapp-toggle-wishlist-button [product]="product()" />
       <button matIconButton> 
         <mat-icon>share</mat-icon>
@@ -42,4 +61,17 @@ export class ProductInfo {
   product = input.required<Product>();
   quantity = signal(1);
   store = inject(CatalogStore);
+
+  quantityInCart = computed(() => {
+    const cartItem = this.store.cartItems().find(item => item.product.productId === this.product().productId);
+    return cartItem ? cartItem.quantity : 0;
+  });
+
+
+  updateQuantity(newQuantity: number) {
+    this.store.setItemQuantity({ 
+      productId: this.product().productId, 
+      quantity: newQuantity 
+    });
+  }
 }

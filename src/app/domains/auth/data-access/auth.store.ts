@@ -141,9 +141,10 @@ export const AuthStore = signalStore(
             disableClose: true,
             data: {checkout},
           });
+          return { success: true, error: null };
         } catch(error: any) {
           console.error(error);
-          toaster.error(error.error?.message || 'Registration Failed');
+          return { success: false, error: error.error?.message || 'Registration Failed' };
         } finally {
           patchState(store, {loading: false});
         }

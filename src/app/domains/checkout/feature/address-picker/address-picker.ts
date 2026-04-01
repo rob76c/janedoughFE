@@ -3,10 +3,11 @@ import { Component, inject, OnInit, output, signal } from '@angular/core';
 import { MatIcon } from "@angular/material/icon";
 import { MatRadioButton, MatRadioGroup } from "@angular/material/radio";
 import { AddressService } from '../../data-access/address.service';
+import { MatButton } from '@angular/material/button';
 
 @Component({
   selector: 'webapp-address-picker',
-  imports: [ViewPanel, MatIcon, MatRadioButton, MatRadioGroup],
+  imports: [ViewPanel, MatIcon, MatButton, MatRadioButton, MatRadioGroup],
   template: `
     <div webAppViewPanel>
       <div class="flex items-center justify-between mb-6">
@@ -23,7 +24,7 @@ import { AddressService } from '../../data-access/address.service';
           <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0055DE]"></div>
         </div>
       } @else if (addresses().length === 0) {
-        <p class="text-gray-500">No addresses found. Please add an address to your profile.</p>
+        <p class="text-gray-600 text-lg font-semibold">No addresses found! Please add an address.</p>
       } @else {
         <mat-radio-group 
           class="flex flex-col gap-4" 

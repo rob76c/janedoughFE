@@ -53,8 +53,13 @@ import { AuthStore } from '@/src/app/domains/auth/data-access/auth.store';
           <span class="text-sm font-medium"> {{ user.firstName}} </span>
           <span class="text-xs text-gray-500"> {{ user.email }}</span>
         </div>
-
         <mat-divider> </mat-divider>
+
+        <button class="!min-h-[32px]" mat-menu-item routerLink="/orders">
+            <mat-icon>shopping_bag</mat-icon>
+            My Orders
+          </button>
+          <mat-divider></mat-divider>
 
         <button class="!min-h-[32px]" mat-menu-item (click)="authStore.signOut()">
           <mat-icon>logout</mat-icon>

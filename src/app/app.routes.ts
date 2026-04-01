@@ -30,5 +30,9 @@ export const routes: Routes = [
 {
     path:'product/:productId',
     loadComponent: () => import('@/src/app/domains/catalog/ui/product-details/product-details'),
-}
+},
+{
+    path: 'orders',
+    loadComponent: () => import('@/src/app/domains/orders/feature/my-orders/my-orders'),
+  },
 ];
