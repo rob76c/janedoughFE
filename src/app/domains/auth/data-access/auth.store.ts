@@ -6,7 +6,7 @@ import { computed, effect, inject } from "@angular/core";
 import { Toaster } from "@/src/app/core/notification/toaster.service";
 import { MatDialog } from "@angular/material/dialog";
 import { Router } from "@angular/router";
-import { CartService, loadCartFromStorage } from "../../cart/data-access/cart.service";
+import { CartService } from "../../cart/data-access/cart.service";
 import { CartItem } from "../../catalog/model/cart-item";
 import { SignInDialog } from "../feature/sign-in-dialog/sign-in-dialog";
 import { CatalogStore } from "../../catalog/data-access/catalog.store";
@@ -18,9 +18,11 @@ export type AuthState = {
     loading: boolean;
 };
 
+const initialSession = loadSessionFromStorage();
+
 const initialState: AuthState = {
   user: loadUserFromSession(),            
-  authSession: loadSessionFromStorage(),
+  authSession: initialSession,
   loading: false,
 };
 
@@ -74,7 +76,7 @@ export const AuthStore = signalStore(
             console.error('Failed to fetch user cart upon sign in', cartError);
           }
 
-          patchState(store, {user, loading: false});
+          patchState(store, {user, authSession: response, loading: false});
           catalogStore.setCartItems(fetchedCartItems);
           toaster.success(`Welcome, ${user.username}`);
 
@@ -95,7 +97,7 @@ export const AuthStore = signalStore(
         patchState(store, { loading:true});
         try{
             const response = await firstValueFrom(authService.signOut());
-            patchState(store, {user: undefined,loading:false});
+            patchState(store, {user: undefined, authSession: undefined, loading:false});
             catalogStore.clearCart();
             toaster.success('Successfully Signed Out!')
             router.navigate(['/']);
@@ -160,6 +162,15 @@ export const AuthStore = signalStore(
           localStorage.setItem('user', JSON.stringify(user));
         } else {
           localStorage.removeItem('user');
+        }
+      });
+
+      effect(() => {
+        const authSession = store.authSession();
+        if (authSession) {
+          localStorage.setItem('authSession', JSON.stringify(authSession));
+        } else {
+          localStorage.removeItem('authSession');
         }
       });
 

@@ -44,7 +44,7 @@ export class AuthService {
 
 export const loadSessionFromStorage = (): SignInResponse | undefined => {
   try {
-    const storedSession = localStorage.getItem('signInResponse');
+    const storedSession = localStorage.getItem('authSession');
     return storedSession ? JSON.parse(storedSession) : undefined;
   } catch (error) {
     console.error('Error loading session from local storage', error);
