@@ -16,7 +16,6 @@ const initialState: OrdersState={
 };
 
 export const OrdersStore = signalStore(
-    { providedIn: 'root' },
 
     withState(initialState),
 
@@ -25,7 +24,6 @@ export const OrdersStore = signalStore(
             patchState(store, { loading: true });
             try {
                 const response = await firstValueFrom(orderService.getAllUserOrders());
-                console.log(response);
                 const orders = response.content ;
                 
                 patchState(store, { orders, loading: false });

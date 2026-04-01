@@ -6,6 +6,7 @@ import { OrdersTable } from "./orders-table/orders-table";
 @Component({
   selector: 'webapp-my-orders',
   imports: [BackButton, OrdersTable],
+  providers: [OrdersStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="mx-auto max-w-[1200px] py-6 px-4">

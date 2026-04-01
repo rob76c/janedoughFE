@@ -67,6 +67,6 @@ export const loadUserFromSession = (): User | undefined => {
     lastName: '',
     password: '',
     socialMediaHandle: '',
-    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + session.username
+    image: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=' + session.username + 'size=64'
   };
 };

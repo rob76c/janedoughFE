@@ -54,6 +54,7 @@ export const AuthStore = signalStore(
             jwtToken: response.jwtToken,
             phoneNumber: response.phoneNumber || '',
             roles: response.roles,
+            image: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=' + response.username + 'size=64'
           };
 
           let fetchedCartItems: CartItem[] = [];
