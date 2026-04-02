@@ -15,7 +15,8 @@ export const ShippingAddressSchema = z.object({
 });
 
 export const orderRequestSchema = z.object({
-  addressId: z.number(),
+  shippingAddressId: z.number(),
+  billingAddressId: z.number(),
   paymentMethod: z.string(),
   pgName: z.string(),
   pgPaymentId: z.string(),

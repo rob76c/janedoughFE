@@ -170,7 +170,8 @@ export class PaymentForm implements OnInit {
     // Payment is confirmed successfully! Create the backend Order.
     if (paymentIntent && selectedAddress && paymentIntent.status === 'succeeded') {
       const orderRequest = {
-        addressId: selectedAddress.addressId, // Ensure this matches an actual address ID logic later from your Shipping Form
+        shippingAddressId: selectedAddress.addressId, // Ensure this matches an actual address ID logic later from your Shipping Form
+        billingAddressId: selectedAddress.addressId, 
         paymentMethod: 'ONLINE',
         pgName: 'Stripe',
         pgPaymentId: paymentIntent.id,
