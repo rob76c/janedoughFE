@@ -47,10 +47,10 @@ import { Order} from '../../../model/order';
           <td mat-cell *matCellDef="let order">
             <span
               class="inline-flex items-center justify-start px-3 py-1 rounded-full text-xs font-medium"
-              [class.bg-sky-100]="order.status === 'created'"
-              [class.text-sky-800]="order.status === 'created'"
-              [class.bg-emerald-100]="order.status === 'paid'"
-              [class.text-emerald-800]="order.status === 'paid'"
+              [class.bg-sky-100]="order.orderStatus === 'created'"
+              [class.text-sky-800]="order.orderStatus === 'created'"
+              [class.bg-emerald-100]="order.orderStatus === 'Order Accepted!'"
+              [class.text-emerald-800]="order.orderStatus === 'Order Accepted!'"
             >
               {{ order.orderStatus | titlecase }}
             </span>

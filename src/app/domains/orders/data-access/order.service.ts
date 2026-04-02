@@ -15,7 +15,7 @@ export class OrderService {
     return this.http.post<Order>(`${this.url}/order/users/payments/${paymentMethod}`, orderRequest, {withCredentials:true});
   }
 
-  getAllUserOrders(pageNumber: number = 0, pageSize: number = 10, sortBy: string = 'totalPrice', sortOrder: string = 'desc'): Observable<OrderResponse> {
+  getAllUserOrders(pageNumber: number = 0, pageSize: number = 10, sortBy: string = 'orderDateTime', sortOrder: string = 'desc'): Observable<OrderResponse> {
     const params = new HttpParams()
     .set('pageNumber', pageNumber.toString())
     .set('pageSize', pageSize.toString())

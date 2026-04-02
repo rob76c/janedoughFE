@@ -31,6 +31,7 @@ providers: [],
       </mat-sidenav>
 
       <mat-sidenav-content class="bg-gray-100 p-6 h-full">
+        <div class="max-w-[1200px] mx-4">
         <div class="flex items-center justify-between mb-6">
           <div>
         <h1 class="text-2xl font-bold text-gray-900">
@@ -51,6 +52,7 @@ providers: [],
             />
           </products-card>
           }
+        </div>
         </div>
       </mat-sidenav-content>
     </mat-sidenav-container>
