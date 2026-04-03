@@ -12,12 +12,16 @@ import { Router } from "@angular/router";
 import { AuthStore } from "../../auth/data-access/auth.store";
 
 export type CheckoutState = {
-    selectedAddress: ShippingAddress | undefined;
+    selectedBillingAddress: ShippingAddress | undefined;
+    selectedShippingAddress: ShippingAddress | undefined;
+    isShippingSameAsBilling: boolean;
     loading: boolean,
 }
 
 const initialState: CheckoutState = {
-    selectedAddress: undefined,
+    selectedBillingAddress: undefined,
+    selectedShippingAddress: undefined,
+    isShippingSameAsBilling: true,
     loading: false,
 };
 
@@ -34,7 +38,21 @@ export const CheckoutStore = signalStore (
     withMethods((store, catalogStore= inject(CatalogStore),  matDialog = inject(MatDialog), router = inject(Router), authStore = inject(AuthStore)) => ({
         
         setSelectedAddress(address: any | undefined) {
-            patchState(store, { selectedAddress: address });
+            patchState(store, { selectedBillingAddress: address });
+            if (store.isShippingSameAsBilling()) {
+                patchState(store, { selectedShippingAddress: address });
+            }
+        },
+
+        setSelectedBillingAddress(address: any | undefined) {
+            patchState(store, { selectedShippingAddress: address });
+        },
+
+        setShippingSameAsBilling(isSame: boolean) {
+            patchState(store, { isShippingSameAsBilling: isSame });
+            if (isSame) {
+                patchState(store, { selectedShippingAddress: store.selectedBillingAddress() });
+            }
         },
 
         clearCart: () => {

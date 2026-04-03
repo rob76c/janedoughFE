@@ -81,7 +81,7 @@ export class PaymentForm implements OnInit {
   initializeStripe() {
     const cartItems = this.checkoutStore.cartItems();
     const user = this.checkoutStore.user();
-    const address = this.checkoutStore.selectedAddress();
+    const address = this.checkoutStore.selectedBillingAddress();
 
     if (cartItems.length === 0) return;
     if (!user || !address) return;
@@ -142,7 +142,7 @@ export class PaymentForm implements OnInit {
     e.preventDefault();
     const stripeInstance = this.stripe();
     const elements = this.stripeElements();
-    const selectedAddress = this.checkoutStore.selectedAddress();
+    const selectedAddress = this.checkoutStore.selectedBillingAddress();
 
     if (!stripeInstance || !elements) return;
 
@@ -166,12 +166,11 @@ export class PaymentForm implements OnInit {
       this.isLoading.set(false);
       return;
     }
-
-    // Payment is confirmed successfully! Create the backend Order.
+    const selectedShippingAddress = this.checkoutStore.selectedShippingAddress();
     if (paymentIntent && selectedAddress && paymentIntent.status === 'succeeded') {
       const orderRequest = {
-        shippingAddressId: selectedAddress.addressId, // Ensure this matches an actual address ID logic later from your Shipping Form
         billingAddressId: selectedAddress.addressId, 
+        shippingAddressId: selectedShippingAddress? selectedShippingAddress.addressId : selectedAddress.addressId, 
         paymentMethod: 'ONLINE',
         pgName: 'Stripe',
         pgPaymentId: paymentIntent.id,

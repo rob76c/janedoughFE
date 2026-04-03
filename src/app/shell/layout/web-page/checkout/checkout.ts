@@ -24,11 +24,27 @@ import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.s
               (addressCreated)="onAddressCreated($event)"
               (cancel)="isCreatingAddress.set(false)" />
           } @else {
-          <webapp-address-picker (addressSelected)="checkoutStore.setSelectedAddress($event)" (createNew)="isCreatingAddress.set(true)"/>
-          }
-          @if (checkoutStore.selectedAddress()) {
-              <webapp-payment-form />
+            <webapp-address-picker 
+              title="Billing Address"
+              icon="local_shipping"
+              [showSameAsBillingCheckbox]="true"
+              (addressSelected)="checkoutStore.setSelectedAddress($event)" 
+              (sameAsBillingChange)="checkoutStore.setShippingSameAsBilling($event)"
+              (createNew)="isCreatingAddress.set(true)" />
+            
+            @if (!checkoutStore.isShippingSameAsBilling()) {
+              <webapp-address-picker 
+                title="Shipping Address"
+                icon="local_shipping"
+                [showSameAsBillingCheckbox]="false"
+                (addressSelected)="checkoutStore.setSelectedBillingAddress($event)" 
+                (createNew)="isCreatingAddress.set(true)" />
             }
+          }
+          
+          @if (checkoutStore.selectedBillingAddress() && checkoutStore.selectedBillingAddress()) {
+            <webapp-payment-form />
+          }
         </div>
         <div class="lg: col-span-2">
           <webapp-order-summary>

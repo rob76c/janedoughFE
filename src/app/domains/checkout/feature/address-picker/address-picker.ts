@@ -1,19 +1,20 @@
 import { ViewPanel } from '@/src/app/shared/directives/view-panel';
-import { Component, inject, OnInit, output, signal } from '@angular/core';
+import { Component, inject, input, OnInit, output, signal } from '@angular/core';
 import { MatIcon } from "@angular/material/icon";
 import { MatRadioButton, MatRadioGroup } from "@angular/material/radio";
 import { AddressService } from '../../data-access/address.service';
 import { MatButton } from '@angular/material/button';
+import { MatCheckbox } from '@angular/material/checkbox'
 
 @Component({
   selector: 'webapp-address-picker',
-  imports: [ViewPanel, MatIcon, MatButton, MatRadioButton, MatRadioGroup],
+  imports: [ViewPanel, MatIcon, MatButton, MatRadioButton, MatRadioGroup, MatCheckbox],
   template: `
     <div webAppViewPanel>
       <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-        <mat-icon>local_shipping</mat-icon>
-        Billing Address
+        <mat-icon>{{ icon() }}</mat-icon>
+        {{ title() }}
       </h2>
       <button matButton="filled" (click)="createNew.emit()">
           Create New
@@ -48,6 +49,15 @@ import { MatButton } from '@angular/material/button';
             </mat-radio-button>
           }
         </mat-radio-group>
+
+        @if (showSameAsBillingCheckbox()) {
+          <mat-checkbox 
+            [checked]="isSameAsBilling()" 
+            (change)="onSameAddressChange($event.checked)"
+            class="mt-6 block">
+            Shipping address is the same as billing address
+          </mat-checkbox>
+        }
       }
 
     </div>
@@ -56,14 +66,20 @@ import { MatButton } from '@angular/material/button';
 })
 export class AddressPicker implements OnInit {
   addressService = inject(AddressService);
+
+  title = input<string>('Shipping Address');
+  icon = input<string>('local_shipping');
+  showSameAsBillingCheckbox = input<boolean>(true);
   
   addresses = signal<any[]>([]);
   isLoading = signal(true);
   selectedAddressId = signal<number | null>(null);
+  isSameAsBilling = signal(true);
   
   // Output event to notify checkout of the selection
   addressSelected = output<any>();
   createNew = output<void>();
+  sameAsBillingChange = output<boolean>();
 
   ngOnInit(): void {
     this.addressService.getUserAddresses().subscribe({
@@ -90,5 +106,10 @@ export class AddressPicker implements OnInit {
     if (selected) {
       this.addressSelected.emit(selected);
     }
+  }
+
+  onSameAddressChange(checked: boolean) {
+    this.isSameAsBilling.set(checked);
+    this.sameAsBillingChange.emit(checked);
   }
 }
