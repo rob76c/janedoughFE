@@ -168,3 +168,14 @@ mat-sidenav {
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   gap: 1rem;
 }
+
+.large-toggle {
+  @include mat.button-toggle-overrides(
+    (
+      height: 45px,
+      label-text-size: 1.25rem, /* 20px */
+      label-text-weight: 500,
+      shape: 18px
+    )
+  );
+}

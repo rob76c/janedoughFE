@@ -8,7 +8,7 @@ import { MatCheckbox } from '@angular/material/checkbox'
 
 @Component({
   selector: 'webapp-address-picker',
-  imports: [ViewPanel, MatIcon, MatButton, MatRadioButton, MatRadioGroup, MatCheckbox],
+  imports: [ViewPanel, MatIcon, MatButton, MatRadioButton, MatRadioGroup],
   template: `
     <div webAppViewPanel>
       <div class="flex items-center justify-between mb-6">
@@ -50,14 +50,6 @@ import { MatCheckbox } from '@angular/material/checkbox'
           }
         </mat-radio-group>
 
-        @if (showSameAsBillingCheckbox()) {
-          <mat-checkbox 
-            [checked]="isSameAsBilling()" 
-            (change)="onSameAddressChange($event.checked)"
-            class="mt-6 block">
-            Shipping address is the same as billing address
-          </mat-checkbox>
-        }
       }
 
     </div>
@@ -69,17 +61,13 @@ export class AddressPicker implements OnInit {
 
   title = input<string>('Shipping Address');
   icon = input<string>('local_shipping');
-  showSameAsBillingCheckbox = input<boolean>(true);
-  
   addresses = signal<any[]>([]);
   isLoading = signal(true);
   selectedAddressId = signal<number | null>(null);
-  isSameAsBilling = signal(true);
   
   // Output event to notify checkout of the selection
   addressSelected = output<any>();
   createNew = output<void>();
-  sameAsBillingChange = output<boolean>();
 
   ngOnInit(): void {
     this.addressService.getUserAddresses().subscribe({
@@ -108,8 +96,4 @@ export class AddressPicker implements OnInit {
     }
   }
 
-  onSameAddressChange(checked: boolean) {
-    this.isSameAsBilling.set(checked);
-    this.sameAsBillingChange.emit(checked);
-  }
 }

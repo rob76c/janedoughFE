@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { BackButton } from '@/src/app/shared/ui/back-button/back-button';
 import { WishlistPreview } from '../../../../domains/cart/feature/wishlist-preview/wishlist-preview';
 import { OrderSummary } from '../../../../domains/cart/feature/order-summary/order-summary';
@@ -9,19 +9,22 @@ import { MatFormField } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.store';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { ShippingForm } from "@/src/app/domains/checkout/feature/shipping-form/shipping-form";
+import { AddressPicker } from "@/src/app/domains/checkout/feature/address-picker/address-picker";
 
 @Component({
-  selector: 'app-shopping-cart',
+  selector: 'webapp-shopping-cart',
   imports: [
     BackButton,
     ListCartItems,
     WishlistPreview,
     OrderSummary,
     MatButton,
-    MatFormField,
-    MatInput,
-    CdkTextareaAutosize,
-  ],
+    MatButtonToggleModule,
+    ShippingForm,
+    AddressPicker
+],
   template: `
     <div class="mx-auto max-w-[1200px] py-6">
       <app-back-button class="mb-6" navigateTo="/products/all">Continue Shopping </app-back-button>
@@ -29,21 +32,27 @@ import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.s
 
       <webapp-wishlist-preview class="mb-6 block" />
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <mat-button-toggle-group class="large-toggle mb-6 w-md " [value]="deliveryMethod()" 
+        (change)="deliveryMethod.set($event.value)">
+        <mat-button-toggle class="w-1/2" value="delivery">Delivery</mat-button-toggle>
+        <mat-button-toggle class="w-1/2" value="pickup">Pickup</mat-button-toggle>
+      </mat-button-toggle-group>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2">
-          <webapp-list-cart-items />
-          <form class="grid grid-cols-1 gap-4">
-            <mat-form-field>
-              <textarea
-                matInput
-                placeholder="Get a fortune, give a fortune!!"
-                rows="4"
-                cdkTextareaAutosize
-                cdkAutosizeMinRows="4"
-                cdkAutosizeMaxRows="8"
-              ></textarea>
-            </mat-form-field>
-          </form>
+        @if (deliveryMethod() === 'delivery') {
+        @if (isCreatingAddress()) {
+            <webapp-shipping-form 
+              (addressCreated)="onAddressCreated($event)"
+              (cancel)="isCreatingAddress.set(false)" />
+          } @else {
+            <webapp-address-picker 
+                title="Shipping Address"
+                icon="local_shipping"
+                (addressSelected)="checkoutStore.setSelectedShippingAddress($event)" 
+                (createNew)="isCreatingAddress.set(true)" />
+          }
+        }
+          <webapp-list-cart-items class="block mt-6" />
         </div>
         <div>
           <webapp-order-summary>
@@ -51,7 +60,7 @@ import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.s
               <button
                 matButton="filled"
                 class="w-full mt-6 py-3"
-                (click)="store.proceedToCheckout()"
+                (click)="checkoutStore.proceedToCheckout()"
               >
                 Proceed to Checkout
               </button>
@@ -64,5 +73,15 @@ import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.s
   styles: ``,
 })
 export default class ShoppingCart {
-  store = inject(CheckoutStore);
+  checkoutStore = inject(CheckoutStore);
+
+  deliveryMethod = signal<'delivery' | 'pickup'>('pickup');
+  isCreatingAddress = signal(false);
+
+  onAddressCreated(newAddress: any) {
+    // Switch back to the picker view. Since it uses an @if block, Angular will
+    // destroy and recreate the AddressPicker component, naturally triggering 
+    // its ngOnInit to fetch the updated list of addresses!
+    this.isCreatingAddress.set(false);
+  }
 }

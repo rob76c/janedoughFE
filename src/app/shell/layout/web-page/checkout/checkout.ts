@@ -10,7 +10,7 @@ import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.s
 
 @Component({
   selector: 'webapp-checkout',
-  imports: [BackButton, ShippingForm, PaymentForm, OrderSummary, MatButton, AddressPicker],
+  imports: [BackButton, PaymentForm, OrderSummary, MatButton, AddressPicker],
   template: `
     <div class="mx-auto max-w-[1200px] py-6">
       <app-back-button class="mb-4" navigateTo="/cart">Back to Cart</app-back-button>
@@ -19,30 +19,14 @@ import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.s
       <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div class="lg:col-span-3 flex flex-col gap-6">
 
-        @if (isCreatingAddress()) {
-            <webapp-shipping-form 
-              (addressCreated)="onAddressCreated($event)"
-              (cancel)="isCreatingAddress.set(false)" />
-          } @else {
             <webapp-address-picker 
               title="Billing Address"
               icon="local_shipping"
-              [showSameAsBillingCheckbox]="true"
-              (addressSelected)="checkoutStore.setSelectedAddress($event)" 
-              (sameAsBillingChange)="checkoutStore.setShippingSameAsBilling($event)"
+              (addressSelected)="checkoutStore.setSelectedBillingAddress($event)" 
               (createNew)="isCreatingAddress.set(true)" />
-            
-            @if (!checkoutStore.isShippingSameAsBilling()) {
-              <webapp-address-picker 
-                title="Shipping Address"
-                icon="local_shipping"
-                [showSameAsBillingCheckbox]="false"
-                (addressSelected)="checkoutStore.setSelectedBillingAddress($event)" 
-                (createNew)="isCreatingAddress.set(true)" />
-            }
-          }
           
-          @if (checkoutStore.selectedBillingAddress() && checkoutStore.selectedBillingAddress()) {
+          
+          @if (checkoutStore.selectedBillingAddress() && checkoutStore.selectedShippingAddress()) {
             <webapp-payment-form />
           }
         </div>
@@ -77,13 +61,6 @@ import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.s
 export default class Checkout {
   checkoutStore = inject(CheckoutStore);
   isCreatingAddress = signal(false);
-
-  onAddressCreated(newAddress: any) {
-    // Switch back to the picker view. Since it uses an @if block, Angular will
-    // destroy and recreate the AddressPicker component, naturally triggering 
-    // its ngOnInit to fetch the updated list of addresses!
-    this.isCreatingAddress.set(false);
-  }
 
   scrollToPayment() {
     const paymentSection = document.getElementById('payment-section');
