@@ -22,6 +22,7 @@ export const orderRequestSchema = z.object({
   pgPaymentId: z.string(),
   pgStatus: z.string(),
   pgResponseMessage: z.string(),
+  orderType: z.string(),
 })
 
 export const OrderSchema = z.object({

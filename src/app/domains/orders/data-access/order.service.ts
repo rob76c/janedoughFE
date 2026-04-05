@@ -11,7 +11,7 @@ export class OrderService {
 
   http = inject(HttpClient);
   
-  orderCompleted(paymentMethod: string, orderRequest: OrderRequest): Observable<Order> {
+  placeOrder(paymentMethod: string, orderRequest: OrderRequest): Observable<Order> {
     return this.http.post<Order>(`${this.url}/order/users/payments/${paymentMethod}`, orderRequest, {withCredentials:true});
   }
 

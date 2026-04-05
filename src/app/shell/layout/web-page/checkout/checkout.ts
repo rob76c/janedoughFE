@@ -22,6 +22,7 @@ import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.s
             <webapp-address-picker 
               title="Billing Address"
               icon="local_shipping"
+              [shippingAddressId]="checkoutStore.selectedShippingAddress()?.addressId"
               (addressSelected)="checkoutStore.setSelectedBillingAddress($event)" 
               (createNew)="isCreatingAddress.set(true)" />
           

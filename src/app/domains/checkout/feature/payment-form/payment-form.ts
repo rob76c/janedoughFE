@@ -93,7 +93,7 @@ export class PaymentForm implements OnInit {
     const stripeTotalAmount = Math.round((subtotal + tax) * 100);
     this.totalAmount.set(totalAmount);
     
-    // Build payload matching your backend StripePaymentDto
+    
     const stripePaymentDto = {
       amount: stripeTotalAmount,
       currency: 'usd',
@@ -101,8 +101,7 @@ export class PaymentForm implements OnInit {
       phoneNumber: user?.phoneNumber || '',
       name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
       description: 'Jane Dough Order',
-      // Note: Providing a dummy address so StripeServiceImpl.java doesn't throw NullPointerException.
-      // You should eventually pass the real address values from your ShippingForm.
+      
       address: {
         street: address.street,
         city: address.city,
@@ -112,8 +111,7 @@ export class PaymentForm implements OnInit {
       }
     };
 
-    // Fetch the PaymentIntent client secret.
-    // Important: responseType is 'text' because your Spring Boot controller returns a raw String, not a JSON object.
+    
     this.http.post(`${environment.apiUrl}/stripe-client-secret`, stripePaymentDto, {withCredentials:true, responseType: 'text' })
       .subscribe({
         next: (clientSecret: string) => {
@@ -146,7 +144,7 @@ export class PaymentForm implements OnInit {
 
     if (!stripeInstance || !elements) return;
 
-    // Trigger local loading signal
+   
     this.isLoading.set(true);
 
     const { error, paymentIntent } = await stripeInstance.confirmPayment({
@@ -175,12 +173,12 @@ export class PaymentForm implements OnInit {
         pgName: 'Stripe',
         pgPaymentId: paymentIntent.id,
         pgStatus: paymentIntent.status,
-        pgResponseMessage: 'Payment Successful'
+        pgResponseMessage: 'Payment Successful',
+        orderType: 'PICKUP'
       };
 
-      this.orderService.orderCompleted('ONLINE', orderRequest).subscribe({
+      this.orderService.placeOrder('ONLINE', orderRequest).subscribe({
         next: (order) => {
-          // Clear frontend cart items inside the store to reflect empty cart
           this.checkoutStore.clearCart();
           this.isLoading.set(false);
           this.router.navigate(['/order-success']);

@@ -64,6 +64,8 @@ export class AddressPicker implements OnInit {
   addresses = signal<any[]>([]);
   isLoading = signal(true);
   selectedAddressId = signal<number | null>(null);
+
+  shippingAddressId = input<number>();
   
   // Output event to notify checkout of the selection
   addressSelected = output<any>();
@@ -77,8 +79,11 @@ export class AddressPicker implements OnInit {
         
         // Auto-select the first address by default
         if (data.length > 0) {
-          this.selectedAddressId.set(data[0].addressId);
-          this.addressSelected.emit(data[0]);
+          const shippingAddressId = this.shippingAddressId();
+          const targetAddress = shippingAddressId ? data.find(a => a.addressId === shippingAddressId) || data[0] : data[0];
+
+          this.selectedAddressId.set(targetAddress.addressId);
+          this.addressSelected.emit(targetAddress);
         }
       },
       error: (err) => {
