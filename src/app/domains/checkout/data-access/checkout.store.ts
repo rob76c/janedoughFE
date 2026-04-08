@@ -15,12 +15,20 @@ export type CheckoutState = {
     selectedBillingAddress: ShippingAddress | undefined;
     selectedShippingAddress: ShippingAddress | undefined;
     loading: boolean,
+    orderFulfillmentMethod: 'PICKUP' | 'DELIVERY';
+    tip: number;
+    tipType: 'PERCENTAGE' | 'CUSTOM';
+    
+    
 }
 
 const initialState: CheckoutState = {
     selectedBillingAddress: undefined,
     selectedShippingAddress: undefined,
     loading: false,
+    orderFulfillmentMethod: 'PICKUP',
+    tip: 15,
+    tipType: 'PERCENTAGE'
 };
 
 export const CheckoutStore = signalStore (
@@ -28,12 +36,30 @@ export const CheckoutStore = signalStore (
 
     withState(initialState),
 
-    withComputed((store, catalogStore = inject(CatalogStore), authStore = inject(AuthStore)) => ({
-        cartItems: computed(() => catalogStore.cartItems()),
-        user: computed(() => authStore.user())
-    })),
+    withComputed((store) => {
+        const catalogStore = inject(CatalogStore);
+        const authStore = inject(AuthStore);
+        const subtotal = computed(() => catalogStore.cartItems().reduce((acc, item) => acc + item.product.specialPrice * item.quantity, 0));
+        
+        return {
+            cartItems: computed(() => catalogStore.cartItems()),
+            user: computed(() => authStore.user()),
+            subtotal,
+            // Centralize the tip calculation here
+            tipAmount: computed(() => {
+                if (store.orderFulfillmentMethod() !== 'DELIVERY') return 0;
+                return store.tipType() === 'PERCENTAGE' ? subtotal() * (store.tip() / 100) : store.tip();
+            })
+        };
+    }),
 
-    withMethods((store, catalogStore= inject(CatalogStore),  matDialog = inject(MatDialog), router = inject(Router), authStore = inject(AuthStore)) => ({
+    withMethods((store) => {
+      const catalogStore = inject(CatalogStore);
+        const matDialog = inject(MatDialog);
+        const router = inject(Router);
+        const authStore = inject(AuthStore);
+
+        return {
         
         setSelectedBillingAddress(address: any | undefined) {
             patchState(store, { selectedBillingAddress: address });
@@ -43,6 +69,13 @@ export const CheckoutStore = signalStore (
             patchState(store, { selectedShippingAddress: address });
         },
 
+        setOrderFulfillmentMethod(method: 'PICKUP' | 'DELIVERY') {
+            patchState(store, { orderFulfillmentMethod: method });
+        },
+
+        setTip(tipAmount: number, type: 'PERCENTAGE' | 'CUSTOM' = 'PERCENTAGE') {
+            patchState(store, { tip: tipAmount, tipType: type });
+        },
 
         clearCart: () => {
         catalogStore.clearCart();
@@ -60,5 +93,6 @@ export const CheckoutStore = signalStore (
         }
         router.navigate(['/checkout']);
       },
-    })),
+    };
+    }),
 );

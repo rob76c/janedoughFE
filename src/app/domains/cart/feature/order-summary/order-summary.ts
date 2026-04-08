@@ -2,6 +2,7 @@ import { CatalogStore } from '@/src/app/domains/catalog/data-access/catalog.stor
 import { Component, computed, inject } from '@angular/core';
 import { ViewPanel } from "@/src/app/shared/directives/view-panel";
 import { DecimalPipe } from '@angular/common';
+import { CheckoutStore } from '../../../checkout/data-access/checkout.store';
 
 @Component({
   selector: 'webapp-order-summary',
@@ -23,6 +24,16 @@ import { DecimalPipe } from '@angular/common';
         <span>Tax</span>
         <span>\$ {{tax()| number:'1.2-2'}}</span>
       </div>
+      @if (checkoutStore.orderFulfillmentMethod() === 'DELIVERY') {
+          <div class="flex justify-between"> 
+            <span>Delivery Fee</span>
+            <span>\$ {{deliveryFee() | number:'1.2-2'}}</span>
+          </div>
+          <div class="flex justify-between"> 
+            <span>Driver Tip {{checkoutStore.tipType() === 'PERCENTAGE' ? '(' + checkoutStore.tip() + '%)' : ''}}</span>
+            <span>\$ {{tipAmount() | number:'1.2-2'}}</span>
+          </div>
+        }
       <div class="flex justify-between border-t pt-3 font-bold text-lg"> 
         <span>Total</span>
         <span>\$ {{total()| number:'1.2-2'}}</span>
@@ -35,11 +46,11 @@ import { DecimalPipe } from '@angular/common';
 })
 export class OrderSummary {
  store = inject(CatalogStore);
-
+ checkoutStore = inject(CheckoutStore);
  subtotal = computed(() => this.store.cartItems().reduce((acc, item) => acc + item.product.specialPrice * item.quantity, 0));
-
  tax = computed(() => 0.06625 * this.subtotal());
-
-
- total = computed(() => this.tax() + this.subtotal())
+ deliveryFee = computed(() => this.checkoutStore.orderFulfillmentMethod() === 'DELIVERY' ? 5 : 0);
+ tipAmount = computed(() => this.checkoutStore.tipAmount());
+ 
+  total = computed(() => this.tax() + this.subtotal() + this.deliveryFee() + this.tipAmount());
 }

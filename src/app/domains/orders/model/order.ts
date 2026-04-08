@@ -23,6 +23,7 @@ export const orderRequestSchema = z.object({
   pgStatus: z.string(),
   pgResponseMessage: z.string(),
   orderType: z.string(),
+  tip: z.number(),
 })
 
 export const OrderSchema = z.object({

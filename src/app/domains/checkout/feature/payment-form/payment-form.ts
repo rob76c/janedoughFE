@@ -69,6 +69,7 @@ export class PaymentForm implements OnInit {
   stripeElements = signal<StripeElements | null>(null);
   isLoading = signal(false); // Using local state for form submission
   errorMessage = signal<string | null>(null);
+  tipAmount = signal<number>(0);
   totalAmount = signal<number>(0);
 
   async ngOnInit() {
@@ -89,9 +90,13 @@ export class PaymentForm implements OnInit {
     // Calculate total in cents for Stripe
     const subtotal = cartItems.reduce((acc, item) => acc + item.product.specialPrice * item.quantity, 0);
     const tax = 0.06625 * subtotal;
-    const totalAmount = subtotal + tax;
-    const stripeTotalAmount = Math.round((subtotal + tax) * 100);
+    const deliveryFee = this.checkoutStore.orderFulfillmentMethod() === 'DELIVERY' ? 5 : 0;
+    const calculatedTip = this.checkoutStore.tipAmount();
+    this.tipAmount.set(calculatedTip);
+    const totalAmount = subtotal + tax + deliveryFee + calculatedTip;
+    const stripeTotalAmount = Math.round((totalAmount) * 100);
     this.totalAmount.set(totalAmount);
+    console.log(this.tipAmount())
     
     
     const stripePaymentDto = {
@@ -174,7 +179,8 @@ export class PaymentForm implements OnInit {
         pgPaymentId: paymentIntent.id,
         pgStatus: paymentIntent.status,
         pgResponseMessage: 'Payment Successful',
-        orderType: 'PICKUP'
+        orderType: this.checkoutStore.orderFulfillmentMethod(),
+        tip: this.tipAmount()
       };
 
       this.orderService.placeOrder('ONLINE', orderRequest).subscribe({
