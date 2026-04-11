@@ -2,12 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { ShippingAddress } from '../../orders/model/order';
 import { Observable } from 'rxjs';
+import { environment } from '@/src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AddressService {
-  private url = 'http://localhost:8080/api'
+  private url = `${environment.apiUrl}/api`
 
   http = inject(HttpClient);
   

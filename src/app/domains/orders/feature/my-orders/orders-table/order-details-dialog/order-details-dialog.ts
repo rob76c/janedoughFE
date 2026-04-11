@@ -24,17 +24,35 @@ import { MatButtonModule } from '@angular/material/button';
               <span class="font-medium">{{ data.order.orderStatus | titlecase }}</span>
             }
         </div>
+        
         @if(data.order.orderStatus === 'NEEDS_DELIVERY') {
           <div class="flex justify-between">
           <span class="text-gray-600">Estimated delivery by:  </span>
-          <span class="font-medium">{{ estimatedDelivery() | date: 'medium'}}</span>
+          <span class="font-medium">{{ estimatedTime | date: 'short'}}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Delivery Fee:  </span>
+          <span class="font-medium">{{ data.order.deliveryFee| currency}}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Tip:  </span>
+          <span class="font-medium">{{ data.order.tip| currency}}</span>
         </div>
         } @else if (data.order.orderStatus === 'PICKUP'){
           <div class="flex justify-between">
           <span class="text-gray-600">Pickup time:  </span>
-          <span class="font-medium">{{ estimatedPickup() | date: 'medium'}}</span>
+          <span class="font-medium">{{ estimatedTime | date: 'medium'}}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Pickup at:  </span>
+          <span class="font-medium">76 Lake St Jersey City, NJ 07306</span>
         </div>
         }
+
+        <div class="flex justify-between">
+          <span class="text-gray-600">Tax:  </span>
+          <span class="font-medium">{{ data.order.tax | currency}}</span>
+        </div>
         <div class="flex justify-between">
           <span class="text-gray-600">Total:</span>
           <span class="font-medium">{{ data.order.totalPrice | currency }}</span>
@@ -66,15 +84,34 @@ import { MatButtonModule } from '@angular/material/button';
 export class OrderDetailsDialog {
   data = inject<{order: Order}>(MAT_DIALOG_DATA);
 
-  estimatedDelivery(): Date {
-    const orderDate = new Date(this.data.order.orderDateTime);
-    orderDate.setDate(orderDate.getDate() + 1);
-    return orderDate;
-  }
-  estimatedPickup(): Date {
-    const orderDate = new Date(this.data.order.orderDateTime);
-    orderDate.setMinutes(orderDate.getMinutes() + 15);
-    return orderDate;
+  get estimatedTime(): Date {
+    const order = this.data.order;
+    const orderDate = new Date(order.orderDateTime);
+    
+    let maxDelayMinutes = 0; 
+    const isDelivery = order.orderStatus === 'NEEDS_DELIVERY';
+
+    for (const item of order.orderItems) {
+      const name = item.product.productName;
+      
+      if (isDelivery) {
+        if (name === 'Classic Carrot Cake' || name === 'Chocolate Carrot Cake') {
+          maxDelayMinutes = Math.max(maxDelayMinutes, 24 * 60); // +1 day
+        } else if (name === 'Carrera Classic Protein Shake') {
+          maxDelayMinutes = Math.max(maxDelayMinutes, 30); // +30 minutes
+        }
+      } else {
+        // Evaluate for Pickup
+        if (name === 'Classic Carrot Cake' || name === 'Chocolate Carrot Cake') {
+          maxDelayMinutes = Math.max(maxDelayMinutes, 2 * 60); // +2 hours
+        } else if (name === 'Carrera Classic Protein Shake') {
+          maxDelayMinutes = Math.max(maxDelayMinutes, 10); // +10 minutes
+        }
+      }
+    }
+
+    // Add the maximum required delay to the original order time
+    return new Date(orderDate.getTime() + maxDelayMinutes * 60000);
   }
 
 }

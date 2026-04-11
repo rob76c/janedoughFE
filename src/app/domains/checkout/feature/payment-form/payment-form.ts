@@ -155,7 +155,7 @@ export class PaymentForm implements OnInit {
     const { error, paymentIntent } = await stripeInstance.confirmPayment({
       elements,
       confirmParams: {
-        return_url: "http://localhost:4200/order-success",
+        return_url: `${environment.apiUrl}/order-success`,
       },
       redirect: 'if_required' 
     });

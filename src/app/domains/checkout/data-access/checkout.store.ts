@@ -1,10 +1,6 @@
-import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from "@ngrx/signals";
+import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
 import { ShippingAddress } from "../../orders/model/order";
-import { CartItem } from "../../catalog/model/cart-item";
-import { loadCartFromStorage } from "../../cart/data-access/cart.service";
-import { computed, effect, inject } from "@angular/core";
-import { User } from "../../auth/model/user";
-import { loadUserFromSession } from "../../auth/data-access/auth.service";
+import { computed, inject } from "@angular/core";
 import { CatalogStore } from "../../catalog/data-access/catalog.store";
 import { SignInDialog } from "../../auth/feature/sign-in-dialog/sign-in-dialog";
 import { MatDialog } from "@angular/material/dialog";
@@ -17,10 +13,8 @@ export type CheckoutState = {
     loading: boolean,
     orderFulfillmentMethod: 'PICKUP' | 'DELIVERY';
     tip: number;
-    tipType: 'PERCENTAGE' | 'CUSTOM';
-    
-    
-}
+    tipType: 'PERCENTAGE' | 'CUSTOM'; 
+};
 
 const initialState: CheckoutState = {
     selectedBillingAddress: undefined,
@@ -45,7 +39,7 @@ export const CheckoutStore = signalStore (
             cartItems: computed(() => catalogStore.cartItems()),
             user: computed(() => authStore.user()),
             subtotal,
-            // Centralize the tip calculation here
+            
             tipAmount: computed(() => {
                 if (store.orderFulfillmentMethod() !== 'DELIVERY') return 0;
                 return store.tipType() === 'PERCENTAGE' ? subtotal() * (store.tip() / 100) : store.tip();
@@ -82,6 +76,9 @@ export const CheckoutStore = signalStore (
       },
 
       proceedToCheckout: () => {
+        if(store.cartItems().length === 0) {
+            return;
+        }
         if (!authStore.user()) {
           matDialog.open(SignInDialog, {
             disableClose: true,

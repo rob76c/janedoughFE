@@ -2,12 +2,10 @@ import { Component, inject, signal } from '@angular/core';
 import { BackButton } from '@/src/app/shared/ui/back-button/back-button';
 import { WishlistPreview } from '../../../../domains/cart/feature/wishlist-preview/wishlist-preview';
 import { OrderSummary } from '../../../../domains/cart/feature/order-summary/order-summary';
-import { MatAnchor, MatButton } from '@angular/material/button';
+import { MatButton } from '@angular/material/button';
 import { ListCartItems } from '@/src/app/domains/cart/feature/list-cart-items/list-cart-items';
-import { CatalogStore } from '@/src/app/domains/catalog/data-access/catalog.store';
-import { MatFormField, MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput, MatInputModule } from '@angular/material/input';
-import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { CheckoutStore } from '@/src/app/domains/checkout/data-access/checkout.store';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { ShippingForm } from "@/src/app/domains/checkout/feature/shipping-form/shipping-form";
@@ -98,6 +96,7 @@ import { MatIcon } from "@angular/material/icon";
               <button
                 matButton="filled"
                 class="w-full mt-6 py-3"
+                [disabled]="checkoutStore.cartItems().length === 0"
                 (click)="checkoutStore.proceedToCheckout()"
               >
                 Proceed to Checkout

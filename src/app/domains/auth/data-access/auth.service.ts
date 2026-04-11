@@ -2,12 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { SignInApiParams, SignInParams, SignInResponse, User } from '../model/user';
 import { Observable } from 'rxjs';
+import { environment } from '@/src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private url = 'http://localhost:8080/api/auth';
+  private url = `${environment.apiUrl}/api/auth`;
 
   http = inject(HttpClient);
 
@@ -38,7 +39,7 @@ export class AuthService {
   }
 
   signOut() {
-    return this.http.post(`${this.url}/signout`, {withCredentials:true})
+    return this.http.post(`${this.url}/signout`, {}, {withCredentials:true})
   }
 }
 

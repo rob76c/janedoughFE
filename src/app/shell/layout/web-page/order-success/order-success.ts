@@ -12,8 +12,11 @@ import { RouterLink } from '@angular/router';
         <mat-icon class="!text-green-500 !h-[56px] !w-[56px] !text-[56px]">check_circle</mat-icon>
         <h2 class="font-semibold text-green-600 text-2xl font-bold"> Order Successful! </h2>
         <p class="text-base"> Thank you for your purchase! Your order has been confirmed! </p>
-        <p class="text-gray-600"> You will recieve an email confirmation shortly with your order details. </p>
-        <button matButton="filled" color="primary" class="w-full max-w-xs mt-2" routerLink="/">Continue Shopping</button>
+        <!-- <p class="text-gray-600"> You will recieve an email confirmation shortly with your order details. </p> -->
+        <button matButton="outlined" color="primary" class="w-full max-w-xs mt-2" routerLink="/">Continue Shopping</button>
+        <button matButton="filled" class="w-full max-w-xs border border-gray-300" routerLink="/orders">
+            View Orders
+          </button>
       </div> 
     </div>
   `,

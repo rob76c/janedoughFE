@@ -3,12 +3,13 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Cart } from '../model/cart';
 import { CartItem } from '../../catalog/model/cart-item';
+import { environment } from '@/src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CartService {
-  private url = 'http://localhost:8080/api/carts'
+  private url = `${environment.apiUrl}/api/carts`
 
   http = inject(HttpClient);
 

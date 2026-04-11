@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { BackButton } from "@/src/app/shared/ui/back-button/back-button";
 import { OrdersStore } from '../../data-access/order.store';
 import { OrdersTable } from "./orders-table/orders-table";
+import { MatPaginatorModule } from '@angular/material/paginator';
+
 
 @Component({
   selector: 'webapp-my-orders',
-  imports: [BackButton, OrdersTable],
+  imports: [BackButton, OrdersTable, MatPaginatorModule],
   providers: [OrdersStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -17,14 +19,21 @@ import { OrdersTable } from "./orders-table/orders-table";
       }
 
       @if (store.orders(); as orders) {
-        @if (orders.length === 0) {
+        @if (orders.length === 0 && !store.loading()) {
           <div class="text-center py-8 text-gray-500">No orders found</div>
-        } @else {
-          <webapp-orders-table [orders]="store.orders()" />
+        } @else if ((orders.length > 0)){
+          <webapp-orders-table [orders]="orders" />
+
+          <mat-paginator 
+            [length]="store.totalElements()"
+            [pageSize]="store.pageSize()"
+            [pageIndex]="store.pageNumber()"
+            [pageSizeOptions]="[5, 10, 25]"
+            (page)="store.changePage($event)"
+            aria-label="Select page">
+          </mat-paginator>
         }
       }
-
-
     </div>
   `,
   styles: ``,

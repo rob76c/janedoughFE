@@ -3,13 +3,14 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ProductResponse } from '../model/product-response';
 import { Product } from '../model/product';
+import { environment } from '@/src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProductService {
-  private adminURL = 'http://localhost:8080/api/admin'
-  private publicURL = 'http://localhost:8080/api/public'
+  private adminURL = `${environment.apiUrl}api/admin`
+  private publicURL = `${environment.apiUrl}/api/public`
 
   http = inject(HttpClient);
   

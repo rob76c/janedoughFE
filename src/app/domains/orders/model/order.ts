@@ -59,7 +59,11 @@ export const OrderSchema = z.object({
   }),
   totalPrice: z.number(),
   orderStatus: z.string(),
-  addressId: z.number(),
+  shippingAddressId: z.number(),
+  billingAddressId: z.number(),
+  tax: z.number(),
+  deliveryFee: z.number(),
+  tip: z.number(),
 });
 
 export type ShippingAddress = z.infer<typeof ShippingAddressSchema>;
